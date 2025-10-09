@@ -1,23 +1,22 @@
-import { use } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 export const UserContext = createContext();
 
-const Context = ({ Children}) => {
-    const [vartotojas, setVartotojas] = useState( () => ({
-        loggedIn: false,
-    }));
+export function UserProvider({ children }) {
+    const [user, setUser] = useState({ loggedIn: false });
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_SERVER_URL}/account`, {credentials: "include" })
-        .then(r => r.json())
-        .then(data => {
-            console.log({...data});
-            setVartotojas({...data});
-        }) ;
-    }, []); 
+        fetch(`${import.meta.env.VITE_SERVER_URL}/account`, { credentials: "include" })
+            .then(r => r.json())
+            .then(data => {
+                setUser({ ...data, loggedIn: true });
+            })
+            .catch(() => setUser({ loggedIn: false }));
+    }, []);
 
-    // gaunam vartotojo duomenis is backend
-    return <UserContext.Provider value={vartotojas}>{children}</UserContext.Provider>;
-};
+    return <UserContext.Provider value={{ user, setUser }}>{children}</UserContext.Provider>;
+}
 
-export default Context;
+export function useUser() {
+    return useContext(UserContext);
+}

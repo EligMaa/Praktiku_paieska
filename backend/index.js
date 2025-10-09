@@ -54,7 +54,9 @@ app.get(
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
     // Option 1: Redirect to a frontend page
-    res.redirect(process.env.CLIENT_URL);
+    // res.redirect(process.env.CLIENT_URL);
+
+    res.redirect(`${process.env.CLIENT_URL}/create-profile`);
 
     // Option 2: Send user info as JSON
     // res.json(req.user);
@@ -72,6 +74,13 @@ app.get('/api/hello', (req, res) => {
 
 app.get('/', (req, res) => {
   res.send('Backend server is running!');
+});
+
+app.get('/logout', (req, res) => {
+  req.logout?.(); // for Passport.js
+  req.session?.destroy?.();
+  res.clearCookie('connect.sid');
+  res.status(200).json({ message: 'Logged out' });
 });
 
 app.listen(PORT, () => {
