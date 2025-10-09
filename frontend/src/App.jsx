@@ -1,51 +1,31 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import './App.css';
+import Signup from './components/Signup.jsx';
+import React, { useEffect, useState } from "react";
+import Header from "./components/Header";
+import SearchBar from "./components/SearchBar";
+import JobList from "./components/JobList";
+import AppRoutes from './AppRoutes.jsx';
 
-function App() {
-  const [message, setMessage] = useState({});
+const url = `${import.meta.env.VITE_SERVER_URL}/auth/google`;
 
-  async function callHelloAPI(){
-    try {
-      const response = await fetch("http://localhost:3000/api/hello");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+export default function App() {
+  const [jobs, setJobs] = useState([]);
+  const [search, setSearch] = useState("");
 
-      const data = await response.json();
-      setMessage(data);
-      console.log(data);
-    } catch (error) {
-      console.error("Error message", error);
-    }
-  }
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_SERVER_URL}/api/jobs?search=${search}`)
+      .then((res) => res.json())
+      .then((data) => setJobs(data))
+      .catch((err) => console.error(err));
+  }, [search]);
+
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      {message && message.message}
-      <div className="card">
-        
-        <button onClick={() => callHelloAPI()}>
-          Call Hello API
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="min-h-screen bg-gray-100 text-gray-900">
+      <Header />
+      <main className="flex flex-col items-center p-6">
+        <SearchBar onSearch={setSearch} />
+        <JobList jobs={jobs} />
+      </main>
+    </div>
+  );
 }
-
-export default App
