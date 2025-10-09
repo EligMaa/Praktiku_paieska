@@ -2,7 +2,7 @@ CREATE DATABASE praktika;
 
 CREATE TABLE vartotojas (
     vartotojo_id SERIAL PRIMARY KEY,
-    google_id int NOT NULL UNIQUE,
+    google_id VARCHAR NOT NULL UNIQUE,
     role VARCHAR(20) CHECK (role IN ('studentas', 'imone')) NOT NULL
 );
 
