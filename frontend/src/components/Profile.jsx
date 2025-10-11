@@ -1,16 +1,52 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useUser } from './UserContext.jsx';
 import { useNavigate } from 'react-router-dom';
+
+import ProfileHeader from './profile/ProfileHeader';
+import BasicInfo from './profile/BasicInfo';
+import StudentInfo from './profile/StudentInfo';
+import CompanyInfo from './profile/CompanyInfo';
+import LogoutButton from './profile/LogoutButton';
+import EditButton from './profile/EditButton';
+
+import './profile/Profile.css';
 
 export default function Profile() {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState(null);
 
   useEffect(() => {
-    if (!user || !user.loggedIn) {
-      navigate('/');
+    if (!user) {
+      setLoading(true);
+      return;
     }
-  }, [user, navigate]);
+    
+    if (!user.loggedIn) {
+      navigate('/');
+    } else {
+      // Ensure we have the complete profile data
+      fetch(`${import.meta.env.VITE_SERVER_URL}/account`, { credentials: 'include' })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to fetch profile data');
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data && Object.keys(data).length > 0) {
+            setUser({ ...data, loggedIn: true });
+          }
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching profile:', error);
+          setProfileError(error.message);
+          setLoading(false);
+        });
+    }
+  }, [user?.loggedIn, navigate, setUser]);
 
   const handleLogout = () => {
     fetch(`${import.meta.env.VITE_SERVER_URL}/logout`, { credentials: 'include' })
@@ -19,24 +55,51 @@ export default function Profile() {
         navigate('/');
       });
   };
+  
+  const handleEditProfile = () => {
+    navigate('/edit-profile');
+  };
+
+  if (loading) {
+    return (
+      <div className="profile-container">
+        <div className="profile-loading">
+          <h2>Loading profile data...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div className="profile-container">
+        <div className="profile-error">
+          <h2>Error loading profile</h2>
+          <p>{profileError}</p>
+          <button onClick={() => window.location.reload()}>Try Again</button>
+        </div>
+      </div>
+    );
+  }
 
   if (!user || !user.loggedIn) {
     return null;
   }
 
+  // Extensive debugging
+  console.log("Complete user object:", user);
+  
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '64px' }}>
-      <h1>Profilis</h1>
-      {user.picture && (
-        <img src={user.picture} alt="Google profile" style={{ width: 80, height: 80, borderRadius: '50%', marginBottom: 16 }} />
-      )}
-      <p><strong>Vardas:</strong> {user.name || user.given_name}</p>
-      <p><strong>Gmail:</strong> {user.email}</p>
-      <p><strong>Rolė:</strong> {user.role || 'Nenurodyta'}</p>
-      {/* Add more info as needed */}
-      <button onClick={handleLogout} style={{ marginTop: 24, padding: '8px 24px', borderRadius: 8, background: '#e4d2d2ff', cursor: 'pointer' ,color: 'black' }}>
-        Atsijungti
-      </button>
+    <div className="profile-container">
+      <ProfileHeader user={user} />
+      
+      <div className="profile-content">
+        <BasicInfo user={user} />
+        {user.role === 'studentas' && <StudentInfo user={user} />}
+        {user.role === 'imone' && <CompanyInfo user={user} />}
+        <EditButton onClick={handleEditProfile} />
+        <LogoutButton onLogout={handleLogout} />
+      </div>
     </div>
   );
 }

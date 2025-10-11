@@ -1,4 +1,5 @@
 import React from 'react';
+import GoogleLogo from '../assets/Google_logo.png';
 
 export default function Login() {
   const handleGoogleLogin = () => {
@@ -24,7 +25,7 @@ export default function Login() {
         }}
       >
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+          src={GoogleLogo}
           alt="Google logo"
           style={{ width: 24, height: 24, marginRight: 12 }}
         />

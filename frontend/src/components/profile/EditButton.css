@@ -1,0 +1,25 @@
+.edit-button {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  padding: 8px 24px;
+  border-radius: 8px;
+  background: #e7f0fe;
+  cursor: pointer;
+  color: #2b7de9;
+  border: 1px solid #c1d9f9;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.edit-button:hover {
+  background: #d0e4fd;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.edit-icon {
+  margin-right: 8px;
+}

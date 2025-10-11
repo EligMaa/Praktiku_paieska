@@ -1,47 +1,61 @@
 const passport = require('passport');
-const {Strategy: GoogleStrategy} = require('passport-google-oauth20');
-require("dotenv").config();
+const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
 const pool = require('./db');
 
 passport.use(
-    
     new GoogleStrategy(
         {
             clientID: process.env.CLIENT_ID,
             clientSecret: process.env.CLIENT_SECRET,
-            callbackURL: process.env.GOOGLE_CALLBACK_URL
+            callbackURL: process.env.GOOGLE_CALLBACK_URL,
+            passReqToCallback: true
         },
-        async (_, __, profile, done) => {
+        async (req, accessToken, refreshToken, profile, done) => {
             const account = profile._json;
             let vartotojas = {};
             try {
+                console.log('Google profile:', account);
                 const currentVartotojaQuery = await pool.query(
                     "SELECT * FROM vartotojas WHERE google_id = $1", 
                     [account.sub]
                 );
+                console.log('Existing user query result:', currentVartotojaQuery.rows);
 
                 // Use session to get mode (signup or login)
-                const mode = _.session?.authMode || 'login';
+                const mode = req.session.authMode || 'login';
+                console.log('Auth mode:', mode);
 
                 if (mode === 'signup') {
                     if (currentVartotojaQuery.rows.length === 0) {
-                        const role = null; // Will be chosen in profile setup
-                        await pool.query(
+                        const role = 'unspecified'; // Temporary role that will be updated in profile setup
+                        const insertRes = await pool.query(
                             "INSERT INTO vartotojas (google_id, role) VALUES ($1, $2)", 
                             [account.sub, role]
                         );
+                        console.log('Insert result:', insertRes);
                         const idQuery = await pool.query(
                             "SELECT vartotojo_id FROM vartotojas WHERE google_id = $1", 
                             [account.sub]
                         );
+                        console.log('ID query result:', idQuery.rows);
                         vartotojas = {
-                            id: idQuery.rows[0].vartotojo_id,
+                            id: idQuery.rows[0]?.vartotojo_id || null,
                             isNewUser: true,
+                            name: account.name,
+                            given_name: account.given_name,
+                            family_name: account.family_name,
+                            email: account.email,
+                            picture: account.picture
                         };
                     } else {
                         vartotojas = {
                             id: currentVartotojaQuery.rows[0].vartotojo_id,
                             isNewUser: false,
+                            name: account.name,
+                            given_name: account.given_name,
+                            family_name: account.family_name,
+                            email: account.email,
+                            picture: account.picture
                         };
                     }
                 } else {
@@ -50,6 +64,11 @@ passport.use(
                         vartotojas = {
                             id: currentVartotojaQuery.rows[0].vartotojo_id,
                             isNewUser: false,
+                            name: account.name,
+                            given_name: account.given_name,
+                            family_name: account.family_name,
+                            email: account.email,
+                            picture: account.picture
                         };
                     } else {
                         // Not registered, redirect to signup
@@ -59,14 +78,15 @@ passport.use(
                         };
                     }
                 }
+                console.log('Final user object for session:', vartotojas);
                 done(null, vartotojas);
             } catch (error) {
+                console.error('GoogleStrategy error:', error);
                 done(error);
             }
         }
     )
 );
-
 passport.serializeUser((vartotojas, done) => {
     // uzkrauna info req.session.passport.vartotojas
     done(null, vartotojas);

@@ -6,6 +6,13 @@ CREATE TABLE vartotojas (
     role VARCHAR(20) CHECK (role IN ('studentas', 'imone')) NOT NULL
 );
 
+-- Atnaujinti esamą vartotojas lentelę, kad pridėti 'unspecified' reikšmę prie role stulpelio apribojimo
+ALTER TABLE vartotojas DROP CONSTRAINT vartotojas_role_check;
+
+ALTER TABLE vartotojas ADD CONSTRAINT vartotojas_role_check 
+    CHECK (role IN ('studentas', 'imone', 'unspecified'));
+
+
 CREATE TABLE stud_profilis (
     studento_id int PRIMARY KEY REFERENCES vartotojas(vartotojo_id) ON DELETE CASCADE,
     vardas VARCHAR(255) NOT NULL,

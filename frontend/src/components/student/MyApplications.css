@@ -1,0 +1,166 @@
+.my-applications-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.my-applications-container h2 {
+  font-size: 24px;
+  margin-bottom: 24px;
+  color: #333;
+}
+
+.my-applications-container h3 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #444;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  border-left: 4px solid #c62828;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+}
+
+.browse-jobs-link {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background-color: #2196F3;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.browse-jobs-link:hover {
+  background-color: #1976D2;
+}
+
+.applications-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.application-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: #fff;
+}
+
+.job-details {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.job-details h4 {
+  font-size: 18px;
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.company-name {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.job-location {
+  font-size: 12px;
+  color: #888;
+}
+
+.application-details {
+  padding: 16px;
+}
+
+.applied-date {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+.status-section {
+  margin-bottom: 16px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-pending {
+  background-color: #f5f5f5;
+  color: #757575;
+}
+
+.status-reviewed {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-interviewing {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.status-accepted {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-rejected {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-message {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.status-message.success {
+  color: #2e7d32;
+}
+
+.status-message.error {
+  color: #c62828;
+}
+
+.status-message.info {
+  color: #1565c0;
+}
+
+.cover-letter-section {
+  margin-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 16px;
+}
+
+.cover-letter-section h5 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+.cover-letter-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #666;
+  white-space: pre-line;
+}
