@@ -1,0 +1,16 @@
+.company-info {
+  margin-bottom: 20px;
+  width: 100%;
+  color: #333;
+}
+
+.company-info p {
+  margin: 12px 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.company-info strong {
+  font-weight: 600;
+  margin-right: 5px;
+}

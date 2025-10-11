@@ -1,7 +1,9 @@
 const isAuth = (req, res, next) => {
-    if (req.vartotojas) next();
-    res.json({loggedIn: false});
-    
+    if (req.user) {
+        return next();
+    } else {
+        return res.json({loggedIn: false});
+    }
 }
 
 module.exports = isAuth;

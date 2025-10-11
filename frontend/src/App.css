@@ -1,8 +1,25 @@
 #root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.app-container {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #d5d5d5;
+  min-height: 100vh;
+}
+
+/* Content container for everything except header */
+.content-container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
+  margin-top: 2rem; /* Space after header */
+  margin-top: 2rem; /* Space after the header */
 }
 
 .logo {

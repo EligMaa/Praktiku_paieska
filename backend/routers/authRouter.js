@@ -15,14 +15,14 @@ router.get(
 );
 
 router.get(
-    "/google/callback", 
+    "/auth/google/callback", 
     passport.authenticate("google", {session: true}),
     (req, res) => {
         // Depending on mode, redirect appropriately
         const mode = req.session.authMode;
         if (mode === "signup" && req.user && req.user.isNewUser) {
-            // Redirect to profile setup
-            res.redirect(`${process.env.CLIENT_URL}/profile-setup`);
+            // Redirect to profile creation
+            res.redirect(`${process.env.CLIENT_URL}/create-profile`);
         } else if (mode === "login" && req.user) {
             // Redirect to dashboard
             res.redirect(`${process.env.CLIENT_URL}/dashboard`);

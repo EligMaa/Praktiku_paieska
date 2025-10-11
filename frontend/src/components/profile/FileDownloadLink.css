@@ -1,0 +1,28 @@
+.file-download-link {
+  margin-left: 5px;
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background-color: #f0f7ff;
+  border: 1px solid #c2e0ff;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.file-download-link:hover {
+  background-color: #e1f0ff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-icon {
+  margin-right: 5px;
+}
+
+.file-link-error {
+  color: #e74c3c;
+  font-size: 14px;
+  margin-left: 5px;
+}
