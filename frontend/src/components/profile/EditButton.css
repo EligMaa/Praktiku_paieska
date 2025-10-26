@@ -5,8 +5,8 @@
   border-radius: 8px;
   background: #e7f0fe;
   cursor: pointer;
-  color: #2b7de9;
-  border: 1px solid #c1d9f9;
+  color: #000000;
+  border: 1px solid #e7f0fe;
   font-size: 14px;
   font-weight: 500;
   display: flex;
@@ -17,7 +17,7 @@
 
 .edit-button:hover {
   background: #d0e4fd;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #d0e4fd;
 }
 
 .edit-icon {

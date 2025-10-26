@@ -7,6 +7,7 @@ import Profile from './components/Profile.jsx';
 import App from './App.jsx';
 import CreateProfile from './components/CreateProfile.jsx';
 import EditProfile from './components/EditProfile.jsx';
+import PrivateRoute from './components/PrivateRoute.jsx';
 
 // Internship-related components
 import InternshipList from './components/InternshipList.jsx';
@@ -18,13 +19,13 @@ const AppRoutes = () => (
     <Route path="/signup" element={<Signup />} />
     <Route path="/login" element={<Login />} />
     <Route path="/profile-setup" element={<ProfileSetup />} />
-    <Route path="/profile" element={<Profile />} />
-    <Route path="/create-profile" element={<CreateProfile />} />
-    <Route path="/edit-profile" element={<EditProfile />} />
+  <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+  <Route path="/create-profile" element={<PrivateRoute><CreateProfile /></PrivateRoute>} />
+  <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
     
     {/* Internship routes */}
     <Route path="/internships" element={<InternshipList />} />
-    <Route path="/my-applications" element={<MyApplications />} />
+    <Route path="/my-applications" element={<PrivateRoute requiredRole="studentas"><MyApplications /></PrivateRoute>} />
   </Routes>
 );
 

@@ -8,7 +8,8 @@ export default function SearchBar({ onSearch }) {
       display: 'flex',
       width: '100%',
       maxWidth: '500px',
-      gap: '0.5rem'
+      gap: '0.5rem',
+      marginTop: '1rem'
     },
     searchInput: {
       flexGrow: 1,

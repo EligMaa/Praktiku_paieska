@@ -70,7 +70,7 @@ export default function Header() {
       margin: '1rem 0 2rem'
     },
     headerSlogan: {
-      fontSize: '4rem',
+      
       fontWeight: 'bold',
       textTransform: 'uppercase',
       margin: 0
@@ -116,7 +116,7 @@ export default function Header() {
         </div>
         
         <div style={styles.headerMiddle}>
-          <h2 style={styles.headerSlogan}>COMPANIES</h2>
+          <h2 className="headerSlogan">Siūlomi praktikos pasiūlymai</h2>
         </div>
         
         <div style={styles.headerBottom}>

@@ -4,9 +4,11 @@ const multer = require('multer'); // failams
 const path = require('path');
 const fs = require('fs');
 
-// const isAuth = require('../middleware/isAuth');
+// Maksimalus failo dydis (CV) - 2 MB
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
+// Logo - 1 MB
+const MAX_LOGO_SIZE = 1 * 1024 * 1024; 
 
-// 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
@@ -26,9 +28,10 @@ const storage = multer.diskStorage({
     }
 });
 
-// Create multer instance with storage configuration
 const upload = multer({ 
     storage: storage,
+    // neleidzia daugiau nei 2 MB failu ikelimo
+    limits: { fileSize: MAX_FILE_SIZE },
     fileFilter: function(req, file, cb) {
         // tikrina failu tipus
         if (file.fieldname === 'CV') {
@@ -57,6 +60,8 @@ const upload = multer({
             cb(new Error("Unexpected file field"));
         }
     }
+    // Note: multer limituoja failu dydi kol uploadina, taip pat atliekamas papildomas patikrinimas po uploado
+    // 
 });
 
 const router = express.Router();
@@ -111,9 +116,20 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
                     error: 'CV failas yra privalomas'
                 });
             }
-            
-            const CV_failo_kelias = req.files.CV[0].filename;
-            const CV_originalname = req.files.CV[0].originalname;
+
+            // server-side file size check (defensive)
+            const cvFile = req.files.CV[0];
+                if (cvFile.size > MAX_FILE_SIZE) {
+                // remove uploaded file to avoid storing oversized files
+                fs.unlink(path.join(uploadsDir, cvFile.filename), (unlinkErr) => {
+                    if (unlinkErr) console.error('Failed to remove oversized CV:', unlinkErr);
+                });
+                    const mb = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+                    return res.status(400).json({ error: `Failas per didelis — maksimalus dydis ${mb}MB` });
+            }
+
+            const CV_failo_kelias = cvFile.filename;
+            const CV_originalname = cvFile.originalname;
             
             // prideda nauja stulpeli CV originaliam failo pavadinimui, jei neegzistuoja
             try {
@@ -150,6 +166,18 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
             if (req.files?.logotipo_failo) {
                 logotipo_failo_kelias = req.files.logotipo_failo[0].filename;
                 logotipo_originalname = req.files.logotipo_failo[0].originalname;
+            }
+
+            // logotipo failo dydzio patikra serverio puseje
+            if (req.files?.logotipo_failo) {
+                const logoFile = req.files.logotipo_failo[0];
+                if (logoFile.size > MAX_LOGO_SIZE) {
+                    fs.unlink(path.join(uploadsDir, logoFile.filename), (unlinkErr) => {
+                        if (unlinkErr) console.error('Failed to remove oversized logo:', unlinkErr);
+                    });
+                    const mb = Math.round(MAX_LOGO_SIZE / (1024 * 1024));
+                    return res.status(400).json({ error: `Logotipo failas per didelis — maksimalus dydis ${mb}MB` });
+                }
             }
             
             // prideda nauja stulpeli logotipo originaliam failo pavadinimui, jei neegzistuoja
@@ -290,8 +318,17 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
             
            
             if (req.files?.CV) {
-                const CV_failo_kelias = req.files.CV[0].filename;
-                const CV_originalname = req.files.CV[0].originalname;
+                const cvFile = req.files.CV[0];
+                if (cvFile.size > MAX_FILE_SIZE) {
+                    fs.unlink(path.join(uploadsDir, cvFile.filename), (unlinkErr) => {
+                        if (unlinkErr) console.error('Failed to remove oversized CV:', unlinkErr);
+                    });
+                    const mb = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+                    return res.status(400).json({ error: `Failas per didelis — maksimalus dydis ${mb}MB` });
+                }
+
+                const CV_failo_kelias = cvFile.filename;
+                const CV_originalname = cvFile.originalname;
                 
                 // atnaujina studento profili su nauju CV
                 await pool.query(
@@ -322,8 +359,17 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
             
             
             if (req.files?.logotipo_failo) {
-                const logotipo_failo_kelias = req.files.logotipo_failo[0].filename;
-                const logotipo_originalname = req.files.logotipo_failo[0].originalname;
+                const logoFile = req.files.logotipo_failo[0];
+                    if (logoFile.size > MAX_LOGO_SIZE) {
+                        fs.unlink(path.join(uploadsDir, logoFile.filename), (unlinkErr) => {
+                            if (unlinkErr) console.error('Failed to remove oversized logo:', unlinkErr);
+                        });
+                        const mb = Math.round(MAX_LOGO_SIZE / (1024 * 1024));
+                        return res.status(400).json({ error: `Logotipo failas per didelis — maksimalus dydis ${mb}MB` });
+                    }
+
+                const logotipo_failo_kelias = logoFile.filename;
+                const logotipo_originalname = logoFile.originalname;
                 
                 await pool.query(
                     `UPDATE imones_profilis 
@@ -355,3 +401,19 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
 });
 
 module.exports = router;
+
+// Error handler for multer and file upload related errors
+router.use((err, req, res, next) => {
+    if (!err) return next();
+
+    console.error('Upload error:', err);
+
+    // Multer emits a specific code when file size limit is exceeded
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        const mb = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+        return res.status(400).json({ error: `Failas per didelis — maksimalus dydis ${mb}MB` });
+    }
+
+    // For other errors (fileFilter etc.) return the error message
+    return res.status(400).json({ error: err.message || 'Upload error' });
+});
