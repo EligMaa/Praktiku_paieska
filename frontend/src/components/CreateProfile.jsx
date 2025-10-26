@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './EditProfile.css';
+import { MAX_NAME, MAX_SKILLS, MAX_DESC, enforceLimits, validateFile, MAX_FILE_SIZE } from '../hooks/useFieldLimits';
 
 export default function CreateProfile() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function CreateProfile() {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const handleChange = e => {
     const { name, value, files } = e.target;
@@ -45,15 +47,26 @@ export default function CreateProfile() {
       return;
     }
 
-    // tarpai neleidziami vardui ir pavardei
-    if ((name === 'vardas' || name === 'pavarde') && value.includes(' ')) {
-      setErrors(prev => ({ ...prev, [name]: 'Negalima naudoti tarpų' }));
-    }
+    
+    if (files) {
+      const file = files[0];
+      // If it's the CV field, validate size/type
+      if (name === 'CV') {
+        const ok = validateFile(name, file, setErrors);
+        if (!ok) {
+          // pikti ta faila kuris buvo pries tai
+          setForm(f => ({ ...f, [name]: null }));
+          return;
+        }
+      }
 
-    setForm(f => ({
-      ...f,
-      [name]: files ? files[0] : value,
-    }));
+      setForm(f => ({ ...f, [name]: file }));
+      return;
+    }
+    
+    const newValue = enforceLimits(name, value, setErrors);
+
+    setForm(f => ({ ...f, [name]: newValue }));
   };
 
   // Formos validacija
@@ -72,9 +85,15 @@ export default function CreateProfile() {
       if (!form.universitetas) newErrors.universitetas = 'Universitetas yra privalomas';
       if (!form.igudziai) newErrors.igudziai = 'Įgūdžiai yra privalomi';
       if (!form.CV) newErrors.CV = 'CV failas yra privalomas';
+      // length checks
+  if (form.vardas && form.vardas.length > MAX_NAME) newErrors.vardas = `Ne daugiau nei ${MAX_NAME} simbolių`;
+  if (form.pavarde && form.pavarde.length > MAX_NAME) newErrors.pavarde = `Ne daugiau nei ${MAX_NAME} simbolių`;
+  if (form.igudziai && form.igudziai.length > MAX_SKILLS) newErrors.igudziai = `Ne daugiau nei ${MAX_SKILLS} simbolių`;
     } else if (form.role === 'imone') {
       if (!form.pavadinimas) newErrors.pavadinimas = 'Pavadinimas yra privalomas';
+  if (form.pavadinimas && form.pavadinimas.length > MAX_NAME) newErrors.pavadinimas = `Ne daugiau nei ${MAX_NAME} simbolių`;
       if (!form.aprasymas) newErrors.aprasymas = 'Aprašymas yra privalomas';
+  if (form.aprasymas && form.aprasymas.length > MAX_DESC) newErrors.aprasymas = `Ne daugiau nei ${MAX_DESC} simbolių`;
     }
 
     setErrors(newErrors);
@@ -158,7 +177,15 @@ export default function CreateProfile() {
               onChange={handleChange}
               placeholder="Vardas (be tarpų)"
             />
-            {errors.vardas && <div className="error-message">{errors.vardas}</div>}
+            <div className="field-meta">
+              <small>{form.vardas.length}/{MAX_NAME}</small>
+            </div>
+            {form.vardas.length >= MAX_NAME && (
+              <div className="limit-message">Pasiekta maksimalus ilgis — ne daugiau nei {MAX_NAME} simbolių</div>
+            )}
+            {errors.vardas && !errors.vardas.startsWith('Ne daugiau nei') && (
+              <div className="error-message">{errors.vardas}</div>
+            )}
           </div>
 
           <div className="field-group">
@@ -169,7 +196,15 @@ export default function CreateProfile() {
               onChange={handleChange}
               placeholder="Pavardė (be tarpų)"
             />
-            {errors.pavarde && <div className="error-message">{errors.pavarde}</div>}
+            <div className="field-meta">
+              <small>{form.pavarde.length}/{MAX_NAME}</small>
+            </div>
+            {form.pavarde.length >= MAX_NAME && (
+              <div className="limit-message">Pasiekta maksimalus ilgis — ne daugiau nei {MAX_NAME} simbolių</div>
+            )}
+            {errors.pavarde && !errors.pavarde.startsWith('Ne daugiau nei') && (
+              <div className="error-message">{errors.pavarde}</div>
+            )}
           </div>
 
           <div className="field-group">
@@ -189,7 +224,15 @@ export default function CreateProfile() {
               value={form.igudziai}
               onChange={handleChange}
             />
-            {errors.igudziai && <div className="error-message">{errors.igudziai}</div>}
+            <div className="field-meta">
+              <small>{form.igudziai.length}/{MAX_SKILLS}</small>
+            </div>
+            {form.igudziai.length >= MAX_SKILLS && (
+              <div className="limit-message">Pasiekta maksimalus ilgis — ne daugiau nei {MAX_SKILLS} simbolių</div>
+            )}
+            {errors.igudziai && !errors.igudziai.startsWith('Ne daugiau nei') && (
+              <div className="error-message">{errors.igudziai}</div>
+            )}
           </div>
 
           <div className="field-group">
@@ -213,9 +256,18 @@ export default function CreateProfile() {
             <input
               name="pavadinimas"
               value={form.pavadinimas}
+              maxLength={MAX_NAME}
               onChange={handleChange}
             />
-            {errors.pavadinimas && <div className="error-message">{errors.pavadinimas}</div>}
+            <div className="field-meta">
+              <small>{form.pavadinimas.length}/{MAX_NAME}</small>
+            </div>
+            {form.pavadinimas.length >= MAX_NAME && (
+              <div className="limit-message">Pasiekta maksimalus ilgis — ne daugiau nei {MAX_NAME} simbolių</div>
+            )}
+            {errors.pavadinimas && !errors.pavadinimas.startsWith('Ne daugiau nei') && (
+              <div className="error-message">{errors.pavadinimas}</div>
+            )}
           </div>
 
           <div className="field-group">
@@ -226,7 +278,15 @@ export default function CreateProfile() {
               onChange={handleChange}
               rows="4"
             />
-            {errors.aprasymas && <div className="error-message">{errors.aprasymas}</div>}
+            <div className="field-meta">
+              <small>{form.aprasymas.length}/{MAX_DESC}</small>
+            </div>
+            {form.aprasymas.length >= MAX_DESC && (
+              <div className="limit-message">Pasiekta maksimalus ilgis — ne daugiau nei {MAX_DESC} simbolių</div>
+            )}
+            {errors.aprasymas && !errors.aprasymas.startsWith('Ne daugiau nei') && (
+              <div className="error-message">{errors.aprasymas}</div>
+            )}
           </div>
 
           <div className="field-group">
