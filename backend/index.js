@@ -6,7 +6,6 @@ const path = require('path');
 const fs = require('fs');
 require("dotenv").config();
 require("./auth.js");
-const profileRouter = require('./routers/profileRouter');
 const pool = require('./db');
 
 
@@ -36,7 +35,7 @@ app.use(session({
   })
 );
 
-
+// vartotojo autentifikacijai
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -44,12 +43,13 @@ const indexRouter = require('./routers/indexRouter');
 app.use("/", indexRouter);
 
 const authRouter = require('./routers/authRouter');
-// app.use("/", authRouter);
 app.use(authRouter);
 
-app.use(profileRouter); // mount to root
+const profileRouter = require('./routers/profileRouter');
+app.use(profileRouter); 
 
-// File download route with proper content types
+// Filu atsisiuntimo endpointas
+// :filename yra dinaminis parametras, kuris nurodo, kokį failą vartotojas nori atsisiųsti
 app.get('/uploads/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, 'uploads', filename);
@@ -62,7 +62,7 @@ app.get('/uploads/:filename', (req, res) => {
     const ext = path.extname(filename).toLowerCase();
     let contentType = 'application/octet-stream'; // Default content type
     
-    // Set appropriate content type based on file extension
+    // nustatomas turinios tipas pagal failo pletini
     switch (ext) {
       case '.pdf':
         contentType = 'application/pdf';
@@ -83,17 +83,16 @@ app.get('/uploads/:filename', (req, res) => {
         break;
     }
 
-    // Send file with proper content type
     res.setHeader('Content-Type', contentType);
-    // Set content disposition to make browser download or display inline based on file type
+    // inline reiškia, kad failas bus rodomas naršyklėje
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     
+    // TODO: failas turi puti skaitomas is duomenu bazes. pakeisti saugojima
     fs.createReadStream(filePath).pipe(res);
   });
 });
 
 
-// Removed the basic jobs endpoint as it's now handled by jobRouter
 
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from the API!' });
@@ -115,7 +114,7 @@ app.get('/logout', (req, res) => {
 app.get('/account', async (req, res) => {
   if (req.user) {
     try {
-      // First, get the user's role
+      // vartotojo pagrindine informacija
       const userResult = await pool.query(
         "SELECT * FROM vartotojas WHERE vartotojo_id = $1",
         [req.user.id]
@@ -128,7 +127,7 @@ app.get('/account', async (req, res) => {
       const userRole = userResult.rows[0].role;
       let profileData = { ...req.user, role: userRole };
       
-      // Then, based on the role, get the additional profile information
+      // pagal role paimama papildoma informacija is atitinkamu profiliu lenteliu
       if (userRole === 'studentas') {
         const studentResult = await pool.query(
           "SELECT * FROM stud_profilis WHERE studento_id = $1",
@@ -138,22 +137,18 @@ app.get('/account', async (req, res) => {
         if (studentResult.rows.length > 0) {
           console.log("Student profile data found:", studentResult.rows[0]);
           
-          // Convert case for consistency in field names
           const studentData = studentResult.rows[0];
           const processedData = {};
           
-          // Map database column names to frontend expected names (lowercase)
           Object.keys(studentData).forEach(key => {
-            // Convert CV_original_filename to cv_original_filename for frontend
+            
             if (key === 'cv_original_filename' || key === 'CV_original_filename') {
               processedData['cv_original_filename'] = studentData[key];
             } 
-            // Convert CV_failo_kelias to cv_failo_kelias for frontend
             else if (key === 'cv_failo_kelias' || key === 'CV_failo_kelias') {
               processedData['cv_failo_kelias'] = studentData[key];
             }
             else {
-              // Keep other keys with original casing
               processedData[key.toLowerCase()] = studentData[key];
             }
           });

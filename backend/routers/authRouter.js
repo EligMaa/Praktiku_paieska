@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 
-// Mode (signup/login) is passed as a query param
+// Mode (signup/login) 
 router.get(
     "/auth/google", 
     (req, res, next) => {
@@ -18,16 +18,16 @@ router.get(
     "/auth/google/callback", 
     passport.authenticate("google", {session: true}),
     (req, res) => {
-        // Depending on mode, redirect appropriately
+        // pagal mode nukreipiama i atitinkama
         const mode = req.session.authMode;
         if (mode === "signup" && req.user && req.user.isNewUser) {
-            // Redirect to profile creation
+            // nukreipia i profilio kurima
             res.redirect(`${process.env.CLIENT_URL}/create-profile`);
         } else if (mode === "login" && req.user) {
-            // Redirect to dashboard
+            
             res.redirect(`${process.env.CLIENT_URL}/dashboard`);
         } else {
-            // Default
+            // pagrindinis puslapis
             res.redirect(`${process.env.CLIENT_URL}/`);
         }
     }

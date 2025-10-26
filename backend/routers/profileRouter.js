@@ -1,25 +1,25 @@
 
 const express = require('express');
-const multer = require('multer');
+const multer = require('multer'); // failams
 const path = require('path');
 const fs = require('fs');
-// Ensure we import the isAuth middleware properly
+
 // const isAuth = require('../middleware/isAuth');
 
-// Create uploads directory if it doesn't exist
+// 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
     console.log('Created uploads directory');
 }
 
-// Configure storage with filename preservation
 const storage = multer.diskStorage({
+    // TODO: pakeisti i duomenu bazeje saugoma kelia
     destination: function (req, file, cb) {
         cb(null, 'uploads/');
     },
     filename: function (req, file, cb) {
-        // Generate unique filename while preserving original extension
+        // generuojamas unikalus failo pavadinimas ir saugomas originalus 
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname);
         cb(null, file.fieldname + '-' + uniqueSuffix + ext);
@@ -30,9 +30,9 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     fileFilter: function(req, file, cb) {
-        // Allow CV files and logo files based on field name
+        // tikrina failu tipus
         if (file.fieldname === 'CV') {
-            // For CV files, only allow PDF, DOC, DOCX
+            // leidzia tik PDF, DOC, DOCX
             const filetypes = /pdf|doc|docx/;
             const mimetype = filetypes.test(file.mimetype);
             const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -43,7 +43,7 @@ const upload = multer({
                 cb(new Error("Only PDF, DOC, and DOCX files are allowed for CV"));
             }
         } else if (file.fieldname === 'logotipo_failo') {
-            // For logo files, only allow image files
+            // leidzai tik jpeg, png, gif, jpg
             const filetypes = /jpeg|jpg|png|gif/;
             const mimetype = filetypes.test(file.mimetype);
             const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -63,7 +63,7 @@ const router = express.Router();
 const pool = require('../db');
 
 
-// Handle file uploads for both student and company profiles
+// Handlina failu ikelima profiliuose
 const uploadFiles = upload.fields([
     { name: 'CV', maxCount: 1 },
     { name: 'logotipo_failo', maxCount: 1 }
@@ -83,13 +83,13 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
             });
         }
         
-        // Update role
+        // 
         await pool.query(
             "UPDATE vartotojas SET role = $1 WHERE vartotojo_id = $2",
             [role, userId]
         );
         
-        // Based on role, insert appropriate profile
+        // pagal role nurodoma atitinkama informacija
         if (role === 'studentas') {
             const { vardas, pavarde, universitetas, igudziai } = req.body;
             
@@ -99,7 +99,7 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
                 });
             }
             
-            // Check for spaces in vardas and pavarde
+            // tikrina ar yra tarpu vardas ir pavarde
             if (vardas.includes(' ') || pavarde.includes(' ')) {
                 return res.status(400).json({
                     error: 'Vardas ir pavardė negali turėti tarpų'
@@ -115,7 +115,7 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
             const CV_failo_kelias = req.files.CV[0].filename;
             const CV_originalname = req.files.CV[0].originalname;
             
-            // Check if the CV_original_filename column exists
+            // prideda nauja stulpeli CV originaliam failo pavadinimui, jei neegzistuoja
             try {
                 await pool.query(`
                     ALTER TABLE stud_profilis 
@@ -123,10 +123,10 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
                 `);
             } catch (schemaErr) {
                 console.error("Error updating schema:", schemaErr);
-                // Continue even if schema update fails
+                
             }
             
-            // Insert student profile
+            // ierpia informacija i duomenu baze
             await pool.query(
                 `INSERT INTO stud_profilis 
                  (studento_id, vardas, pavarde, universitetas, igudziai, CV_failo_kelias, CV_original_filename)
@@ -143,7 +143,7 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
                 });
             }
             
-            // Logo is optional for companies
+            // logo failas nera privalomas
             let logotipo_failo_kelias = null;
             let logotipo_originalname = null;
             
@@ -152,7 +152,7 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
                 logotipo_originalname = req.files.logotipo_failo[0].originalname;
             }
             
-            // Check if the logotipo_original_filename column exists
+            // prideda nauja stulpeli logotipo originaliam failo pavadinimui, jei neegzistuoja
             try {
                 await pool.query(`
                     ALTER TABLE imones_profilis 
@@ -160,10 +160,9 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
                 `);
             } catch (schemaErr) {
                 console.error("Error updating schema:", schemaErr);
-                // Continue even if schema update fails
             }
             
-            // Insert company profile
+            // iterpia informacija i duomenu baze
             await pool.query(
                 `INSERT INTO imones_profilis 
                  (imones_id, pavadinimas, aprasymas, logotipo_failo_kelias, logotipo_original_filename)
@@ -185,7 +184,7 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
 });
 
 
-// Middleware to ensure user is authenticated
+// Middlewareuztikrinti ar vartotojas autentifikuotas
 function isAuth(req, res, next) {
     if (req.user && req.user.id) {
         return next();
@@ -225,13 +224,13 @@ router.post('/api/profile-setup', isAuth, async (req, res) => {
     const userId = req.user.id;
 
     try {
-        // 1. Update role in vartotojas table
+        
         await pool.query(
             "UPDATE vartotojas SET role = $1 WHERE vartotojo_id = $2",
             [role, userId]
         );
 
-        // 2. Insert profile info depending on role
+        // pagal role nurodoma atitinkama informacija
         if (role === "studentas") {
             const { vardas, pavarde, universitetas, igudziai, CV_failo_kelias } = profileData;
             await pool.query(
@@ -257,7 +256,7 @@ router.post('/api/profile-setup', isAuth, async (req, res) => {
     }
 });
 
-// Update profile endpoint
+// profilio redagavimoendpoint
 router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
     try {
         console.log('Profile update data received:', req.body);
@@ -272,7 +271,7 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
             });
         }
         
-        // Based on role, update appropriate profile
+        // pagal role nurodama info kuria galima redaguoti
         if (role === 'studentas') {
             const { vardas, pavarde, universitetas, igudziai } = req.body;
             
@@ -282,19 +281,19 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
                 });
             }
             
-            // Check for spaces in vardas and pavarde
+            
             if (vardas.includes(' ') || pavarde.includes(' ')) {
                 return res.status(400).json({
                     error: 'Vardas ir pavardė negali turėti tarpų'
                 });
             }
             
-            // If a new CV file is uploaded
+           
             if (req.files?.CV) {
                 const CV_failo_kelias = req.files.CV[0].filename;
                 const CV_originalname = req.files.CV[0].originalname;
                 
-                // Update student profile with new CV
+                // atnaujina studento profili su nauju CV
                 await pool.query(
                     `UPDATE stud_profilis 
                      SET vardas = $1, pavarde = $2, universitetas = $3, igudziai = $4,
@@ -303,7 +302,7 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
                     [vardas, pavarde, universitetas, igudziai, CV_failo_kelias, CV_originalname, userId]
                 );
             } else {
-                // Update student profile without changing CV
+                // anaujina studento profili be CV
                 await pool.query(
                     `UPDATE stud_profilis 
                      SET vardas = $1, pavarde = $2, universitetas = $3, igudziai = $4
@@ -321,12 +320,11 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
                 });
             }
             
-            // If a new logo file is uploaded
+            
             if (req.files?.logotipo_failo) {
                 const logotipo_failo_kelias = req.files.logotipo_failo[0].filename;
                 const logotipo_originalname = req.files.logotipo_failo[0].originalname;
                 
-                // Update company profile with new logo
                 await pool.query(
                     `UPDATE imones_profilis 
                      SET pavadinimas = $1, aprasymas = $2,
@@ -335,7 +333,6 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
                     [pavadinimas, aprasymas, logotipo_failo_kelias, logotipo_originalname, userId]
                 );
             } else {
-                // Update company profile without changing logo
                 await pool.query(
                     `UPDATE imones_profilis 
                      SET pavadinimas = $1, aprasymas = $2
