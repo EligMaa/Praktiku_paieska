@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { getAllInternships } from "../services/internshipService";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext";
+import AuthPromptModal from './AuthPromptModal';
 
 export default function InternshipList({ initialInternships = [] }) {
   const [internships, setInternships] = useState(initialInternships);
@@ -9,6 +10,8 @@ export default function InternshipList({ initialInternships = [] }) {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { user } = useUser();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingInternshipId, setPendingInternshipId] = useState(null);
   
   useEffect(() => {
     if (initialInternships.length > 0) {
@@ -36,7 +39,9 @@ export default function InternshipList({ initialInternships = [] }) {
   
   const handleApply = async (internshipId) => {
     if (!user || !user.loggedIn) {
-      navigate("/login?redirect=/internships");
+      // show auth prompt modal instead of immediate redirect
+      setPendingInternshipId(internshipId);
+      setShowAuthModal(true);
       return;
     }
     
@@ -79,6 +84,21 @@ export default function InternshipList({ initialInternships = [] }) {
           </button>
         </div>
       ))}
+
+      <AuthPromptModal
+        open={showAuthModal}
+        onClose={() => { setShowAuthModal(false); setPendingInternshipId(null); }}
+        onLogin={() => {
+          setShowAuthModal(false);
+          const target = pendingInternshipId ? `/internship/${pendingInternshipId}/apply` : '/internships';
+          navigate(`/login?redirect=${encodeURIComponent(target)}`);
+        }}
+        onSignup={() => {
+          setShowAuthModal(false);
+          const target = pendingInternshipId ? `/internship/${pendingInternshipId}/apply` : '/internships';
+          navigate(`/signup?redirect=${encodeURIComponent(target)}`);
+        }}
+      />
     </div>
   );
 }

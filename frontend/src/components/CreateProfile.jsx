@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './EditProfile.css';
+import { UNIVERSITIES } from '../data/universities';
 import { MAX_NAME, MAX_SKILLS, MAX_DESC, enforceLimits, validateFile, MAX_FILE_SIZE } from '../hooks/useFieldLimits';
 
 export default function CreateProfile() {
@@ -63,7 +64,7 @@ export default function CreateProfile() {
       setForm(f => ({ ...f, [name]: file }));
       return;
     }
-    
+
     const newValue = enforceLimits(name, value, setErrors);
 
     setForm(f => ({ ...f, [name]: newValue }));
@@ -76,13 +77,14 @@ export default function CreateProfile() {
     if (!form.role) newErrors.role = 'Rolė yra privaloma';
 
     // Role-specific validation
-    if (form.role === 'studentas') {
+      if (form.role === 'studentas') {
       // Student-specific validation
       if (!form.vardas) newErrors.vardas = 'Vardas yra privalomas';
       if (form.vardas && form.vardas.includes(' ')) newErrors.vardas = 'Vardas negali turėti tarpų';
       if (!form.pavarde) newErrors.pavarde = 'Pavardė yra privaloma';
       if (form.pavarde && form.pavarde.includes(' ')) newErrors.pavarde = 'Pavardė negali turėti tarpų';
       if (!form.universitetas) newErrors.universitetas = 'Universitetas yra privalomas';
+      else if (!UNIVERSITIES.includes(form.universitetas)) newErrors.universitetas = 'Pasirinkite universitetą iš sąrašo';
       if (!form.igudziai) newErrors.igudziai = 'Įgūdžiai yra privalomi';
       if (!form.CV) newErrors.CV = 'CV failas yra privalomas';
       // length checks
@@ -213,7 +215,21 @@ export default function CreateProfile() {
               name="universitetas"
               value={form.universitetas}
               onChange={handleChange}
+              list="universities-list"
+              onBlur={(e) => {
+                const val = e.target.value?.trim();
+                if (!val) return; // empty handled elsewhere
+                if (!UNIVERSITIES.includes(val)) {
+                  // keep the typed value but show an error; submit will be blocked
+                  setErrors(prev => ({ ...prev, universitetas: 'Pasirinkite universitetą iš sąrašo' }));
+                }
+              }}
             />
+            <datalist id="universities-list">
+              {UNIVERSITIES.map(u => (
+                <option key={u} value={u} />
+              ))}
+            </datalist>
             {errors.universitetas && <div className="error-message">{errors.universitetas}</div>}
           </div>
 

@@ -49,3 +49,42 @@
 .profile-error button:hover {
   background-color: #2980b9;
 }
+
+.create-internship-btn{
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #c5c5c5;
+  margin-top: 24px;
+  padding: 8px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: black;
+  border: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+}
+
+.create-internship-btn:hover {
+  background-color: #888888;
+}
+
+/* Make profile action buttons consistent size and alignment
+.profile-content .edit-button,
+.profile-content .logout-button,
+.profile-content .create-internship-btn {
+  width: 100%; 
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 20px;    
+  font-size: 16px;
+  margin-top: 12px;
+}
+
+.profile-content .edit-button { margin-top: 12px; }
+.profile-content .logout-button { margin-top: 16px; } */

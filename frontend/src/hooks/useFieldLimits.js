@@ -4,6 +4,7 @@ export const MAX_DESC = 300;
 
 // filo limitai
 export const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB pavertus baitais
+export const MAX_LOGO_SIZE = 1 * 1024 * 1024; // 1 MB for logos
 
 
 export function validateFile(name, file, setErrors) {
@@ -25,6 +26,21 @@ export function validateFile(name, file, setErrors) {
     if (file.size > MAX_FILE_SIZE) {
       const mb = (MAX_FILE_SIZE / (1024 * 1024)).toFixed(0);
       setErrors(prev => ({ ...prev, [name]: `Failas per didelis — maksimalus dydis ${mb}MB` }));
+      return false;
+    }
+  }
+
+  // logo/image-specific checks
+  if (name === 'logotipo_failo') {
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedImageTypes.includes(file.type)) {
+      setErrors(prev => ({ ...prev, [name]: 'Netinkamas logotipo formato tipas' }));
+      return false;
+    }
+
+    if (file.size > MAX_LOGO_SIZE) {
+      const mb = (MAX_LOGO_SIZE / (1024 * 1024)).toFixed(0);
+      setErrors(prev => ({ ...prev, [name]: `Logotipo failas per didelis — maksimalus dydis ${mb}MB` }));
       return false;
     }
   }

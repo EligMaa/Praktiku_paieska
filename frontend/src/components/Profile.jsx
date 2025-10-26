@@ -8,6 +8,7 @@ import StudentInfo from './profile/StudentInfo';
 import CompanyInfo from './profile/CompanyInfo';
 import LogoutButton from './profile/LogoutButton';
 import EditButton from './profile/EditButton';
+import CreateInternship from './CreateInternship.jsx';
 
 import './profile/Profile.css';
 
@@ -16,15 +17,19 @@ export default function Profile() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [profileError, setProfileError] = useState(null);
+  const [showCreateInternship, setShowCreateInternship] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setLoading(true);
       return;
     }
-    
+
     if (!user.loggedIn) {
-      navigate('/');
+      // PrivateRoute handles routing for unauthenticated users. Keep loading
+      // while the context resolves the auth state.
+      setLoading(true);
+      return;
     } else {
       // Ensure we have the complete profile data
       fetch(`${import.meta.env.VITE_SERVER_URL}/account`, { credentials: 'include' })
@@ -51,8 +56,9 @@ export default function Profile() {
   const handleLogout = () => {
     fetch(`${import.meta.env.VITE_SERVER_URL}/logout`, { credentials: 'include' })
       .then(() => {
+        
+        navigate('/', { replace: true });
         setUser({ loggedIn: false });
-        navigate('/');
       });
   };
   
@@ -97,8 +103,20 @@ export default function Profile() {
         <BasicInfo user={user} />
         {user.role === 'studentas' && <StudentInfo user={user} />}
         {user.role === 'imone' && <CompanyInfo user={user} />}
+        {user.role === 'imone' && (
+          <div style={{ marginTop: 12 }}>
+            <button className="create-internship-btn" onClick={() => setShowCreateInternship(true)}>
+              Sukurti praktiką
+            </button>
+          </div>
+        )}
         <EditButton onClick={handleEditProfile} />
         <LogoutButton onLogout={handleLogout} />
+        <CreateInternship
+          open={showCreateInternship}
+          onClose={() => setShowCreateInternship(false)}
+          company={{ id: user.id, name: user.pavadinimas || user.companyName }}
+        />
       </div>
     </div>
   );

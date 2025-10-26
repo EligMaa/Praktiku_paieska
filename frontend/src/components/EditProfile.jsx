@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from './UserContext';
 import './EditProfile.css';
 import { MAX_NAME, MAX_SKILLS, MAX_DESC, enforceLimits, validateFile, MAX_FILE_SIZE } from '../hooks/useFieldLimits';
+import { UNIVERSITIES } from '../data/universities';
 
 export default function EditProfile() {
   const navigate = useNavigate();
@@ -27,7 +28,9 @@ export default function EditProfile() {
   // Loadina jau egzistuojancia info
   useEffect(() => {
     if (!user || !user.loggedIn) {
-      navigate('/');
+      // Authentication/protection is handled by PrivateRoute; when user info is not present
+      // just keep loading state until the context provides the user.
+      setLoading(true);
       return;
     }
     
@@ -90,6 +93,7 @@ export default function EditProfile() {
       if (!form.pavarde) newErrors.pavarde = 'Pavardė yra privaloma';
       if (form.pavarde && form.pavarde.includes(' ')) newErrors.pavarde = 'Pavardė negali turėti tarpų';
       if (!form.universitetas) newErrors.universitetas = 'Universitetas yra privalomas';
+      else if (!UNIVERSITIES.includes(form.universitetas)) newErrors.universitetas = 'Pasirinkite universitetą iš sąrašo';
       if (!form.igudziai) newErrors.igudziai = 'Įgūdžiai yra privalomi';
 
     } else if (form.role === 'imone') {
@@ -232,7 +236,21 @@ export default function EditProfile() {
               name="universitetas" 
               value={form.universitetas} 
               onChange={handleChange}
+              list="universities-list"
+              onBlur={(e) => {
+                const val = e.target.value?.trim();
+                if (!val) return;
+                if (!UNIVERSITIES.includes(val)) {
+                  
+                  setErrors(prev => ({ ...prev, universitetas: 'Pasirinkite universitetą iš sąrašo' }));
+                }
+              }}
             />
+            <datalist id="universities-list">
+              {UNIVERSITIES.map(u => (
+                <option key={u} value={u} />
+              ))}
+            </datalist>
             {errors.universitetas && <div className="error-message">{errors.universitetas}</div>}
           </div>
           
