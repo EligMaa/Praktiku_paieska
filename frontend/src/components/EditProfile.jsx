@@ -7,14 +7,14 @@ export default function EditProfile() {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
   const [form, setForm] = useState({
-    role: '', // Add this line
+    role: '', 
     vardas: '',
     pavarde: '',
-    // Student-specific fields
+    // sudentu info
     universitetas: '',
     igudziai: '',
     CV: null,
-    // Company-specific fields
+    // imoniu info
     pavadinimas: '',
     aprasymas: '',
     logotipo_failo: null,
@@ -35,7 +35,7 @@ export default function EditProfile() {
     // Pre-fill jau esancia info
     setForm(prevForm => ({
       ...prevForm,
-      role: user.role || '', // Make sure role is set
+      role: user.role || '', 
       vardas: user.vardas || '',
       pavarde: user.pavarde || '',
       universitetas: user.universitetas || '',
@@ -143,7 +143,7 @@ export default function EditProfile() {
         setUser({ ...userData, loggedIn: true });
       }
       
-      alert('Profilis atnaujintas sėkmingai!');
+      // alert('Profilis atnaujintas sėkmingai!');
 
       navigate('/profile');
     } catch (err) {
@@ -168,7 +168,7 @@ export default function EditProfile() {
   
   return (
     <form onSubmit={handleSubmit} className="edit-profile-form">
-      <h2>Redaguoti profilį</h2>
+      <h2 style={{ color: 'white' }}> Redaguoti profilį</h2>
       
       {errors.form && <div className="form-error">{errors.form}</div>}
       
