@@ -129,6 +129,20 @@
   font-style: italic;
 }
 
+.field-meta{
+  text-align: right;
+  margin-top: 4px;
+  color: #999999;
+
+}
+
+.limit-message {
+  font-size: 0.85rem;
+  color: #c00;
+  margin-top: 4px;
+}
+
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
