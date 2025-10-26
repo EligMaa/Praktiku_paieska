@@ -8,8 +8,8 @@ export default function Login() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '64px' }}>
-      <h1 style={{ fontWeight: 'bold', fontSize: '2rem', marginBottom: '32px' }}>InternLink</h1>
-      <h2 style={{ fontWeight: 'normal', fontSize: '1.5rem', marginBottom: '24px' }}>Sign In</h2>
+      <h1 style={{ fontWeight: 'bold', fontSize: '2rem', marginBottom: '32px', color: '#ffffffff' }}>InternLink</h1>
+      <h2 style={{ fontWeight: 'normal', fontSize: '1.5rem', marginBottom: '24px', color: '#d3d2d2ff' }}>Prisijungti</h2>
       <button
         onClick={handleGoogleLogin}
         style={{
@@ -22,7 +22,8 @@ export default function Login() {
           fontSize: '1rem',
           cursor: 'pointer',
           boxShadow: '0 2px 8px 0 rgba(0,0,0,0.05)',
-        }}
+        }
+      }
       >
         <img
           src={GoogleLogo}

@@ -7,10 +7,11 @@ passport.use(
         {
             clientID: process.env.CLIENT_ID,
             clientSecret: process.env.CLIENT_SECRET,
-            callbackURL: process.env.GOOGLE_CALLBACK_URL,
+            callbackURL: process.env.GOOGLE_CALLBACK_URL,  // URL kuria Google nukreips po autentifikacijos
             passReqToCallback: true
         },
         async (req, accessToken, refreshToken, profile, done) => {
+            // autentifikacijos logika
             const account = profile._json;
             let vartotojas = {};
             try {
@@ -27,7 +28,7 @@ passport.use(
 
                 if (mode === 'signup') {
                     if (currentVartotojaQuery.rows.length === 0) {
-                        const role = 'unspecified'; // Temporary role that will be updated in profile setup
+                        const role = 'unspecified'; // laikina role kuria vliau kuriant profili privales pasirinkt
                         const insertRes = await pool.query(
                             "INSERT INTO vartotojas (google_id, role) VALUES ($1, $2)", 
                             [account.sub, role]
@@ -59,7 +60,7 @@ passport.use(
                         };
                     }
                 } else {
-                    // login mode
+                    // Prisijungimas
                     if (currentVartotojaQuery.rows.length > 0) {
                         vartotojas = {
                             id: currentVartotojaQuery.rows[0].vartotojo_id,
@@ -71,7 +72,8 @@ passport.use(
                             picture: account.picture
                         };
                     } else {
-                        // Not registered, redirect to signup
+                        // Jei vartotojas bando prisijungti, bet jo nera duomenu bazeje
+                        console.log('User not found in database, creating new user object');
                         vartotojas = {
                             id: null,
                             isNewUser: true,
@@ -88,12 +90,12 @@ passport.use(
     )
 );
 passport.serializeUser((vartotojas, done) => {
-    // uzkrauna info req.session.passport.vartotojas
+    //  issaugo vartotojo duomenis į sesiją po prisijungimo
     done(null, vartotojas);
 });
 
 passport.deserializeUser((vartotojas, done) => {
-    // uzkrauna info req.user.vartotojas
+    // is sesijos duomenų užkrauna vartotojo duomenis su kiekviena užklausa
     done(null,vartotojas);
     
 });
