@@ -8,7 +8,8 @@ import StudentInfo from './profile/StudentInfo';
 import CompanyInfo from './profile/CompanyInfo';
 import LogoutButton from './profile/LogoutButton';
 import EditButton from './profile/EditButton';
-import CreateInternship from './CreateInternship.jsx';
+import CreateInternshipNew from './CreateInternshipNew.jsx';
+import InternshipList from './InternshipList';
 
 import './profile/Profile.css';
 
@@ -18,6 +19,26 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [profileError, setProfileError] = useState(null);
   const [showCreateInternship, setShowCreateInternship] = useState(false);
+  const [companyInternships, setCompanyInternships] = useState([]);
+
+  // fetch company internships for companies
+  useEffect(() => {
+    const fetchCompanyInternships = async () => {
+      if (user?.loggedIn && user.role === 'imone') {
+        try {
+          const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/praktikos?imones_id=${user.id}`, { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            setCompanyInternships(data);
+          }
+        } catch (err) {
+          console.error('Failed to fetch company internships', err);
+        }
+      }
+    };
+
+    fetchCompanyInternships();
+  }, [user?.loggedIn, user?.role, user?.id]);
 
   useEffect(() => {
     if (!user) {
@@ -112,11 +133,21 @@ export default function Profile() {
         )}
         <EditButton onClick={handleEditProfile} />
         <LogoutButton onLogout={handleLogout} />
-        <CreateInternship
+        <CreateInternshipNew
           open={showCreateInternship}
           onClose={() => setShowCreateInternship(false)}
           company={{ id: user.id, name: user.pavadinimas || user.companyName }}
+          onCreated={(created) => {
+            // prepend created internship to the list
+            setCompanyInternships(prev => [created, ...prev]);
+          }}
         />
+        {user.role === 'imone' && (
+          <div style={{ marginTop: 18 }}>
+            <h4>Jūsų praktikos skelbimai</h4>
+            <InternshipList initialInternships={companyInternships} />
+          </div>
+        )}
       </div>
     </div>
   );

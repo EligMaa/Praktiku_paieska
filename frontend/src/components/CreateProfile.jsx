@@ -26,12 +26,12 @@ export default function CreateProfile() {
   const handleChange = e => {
     const { name, value, files } = e.target;
 
-    // Clear errors when field is changed
+    // istrina klaidas kai keiciasi laukas
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
 
-    // Special handling for role changes
+    
     if (name === 'role') {
       // pagal role pakeitima, resetinam nesusijusius laukus
       setForm(f => ({
@@ -51,11 +51,11 @@ export default function CreateProfile() {
     
     if (files) {
       const file = files[0];
-      // If it's the CV field, validate size/type
+    
       if (name === 'CV') {
         const ok = validateFile(name, file, setErrors);
         if (!ok) {
-          // pikti ta faila kuris buvo pries tai
+          // palikti ta faila kuris buvo pries tai
           setForm(f => ({ ...f, [name]: null }));
           return;
         }
@@ -76,9 +76,9 @@ export default function CreateProfile() {
 
     if (!form.role) newErrors.role = 'Rolė yra privaloma';
 
-    // Role-specific validation
+    
       if (form.role === 'studentas') {
-      // Student-specific validation
+      
       if (!form.vardas) newErrors.vardas = 'Vardas yra privalomas';
       if (form.vardas && form.vardas.includes(' ')) newErrors.vardas = 'Vardas negali turėti tarpų';
       if (!form.pavarde) newErrors.pavarde = 'Pavardė yra privaloma';
@@ -87,7 +87,7 @@ export default function CreateProfile() {
       else if (!UNIVERSITIES.includes(form.universitetas)) newErrors.universitetas = 'Pasirinkite universitetą iš sąrašo';
       if (!form.igudziai) newErrors.igudziai = 'Įgūdžiai yra privalomi';
       if (!form.CV) newErrors.CV = 'CV failas yra privalomas';
-      // length checks
+      // ilgio patikra
   if (form.vardas && form.vardas.length > MAX_NAME) newErrors.vardas = `Ne daugiau nei ${MAX_NAME} simbolių`;
   if (form.pavarde && form.pavarde.length > MAX_NAME) newErrors.pavarde = `Ne daugiau nei ${MAX_NAME} simbolių`;
   if (form.igudziai && form.igudziai.length > MAX_SKILLS) newErrors.igudziai = `Ne daugiau nei ${MAX_SKILLS} simbolių`;
@@ -220,7 +220,7 @@ export default function CreateProfile() {
                 const val = e.target.value?.trim();
                 if (!val) return; // empty handled elsewhere
                 if (!UNIVERSITIES.includes(val)) {
-                  // keep the typed value but show an error; submit will be blocked
+             
                   setErrors(prev => ({ ...prev, universitetas: 'Pasirinkite universitetą iš sąrašo' }));
                 }
               }}

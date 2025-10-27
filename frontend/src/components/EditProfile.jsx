@@ -28,8 +28,6 @@ export default function EditProfile() {
   // Loadina jau egzistuojancia info
   useEffect(() => {
     if (!user || !user.loggedIn) {
-      // Authentication/protection is handled by PrivateRoute; when user info is not present
-      // just keep loading state until the context provides the user.
       setLoading(true);
       return;
     }
@@ -60,7 +58,7 @@ export default function EditProfile() {
     }
     
         
-    // files: validate CV upload and set into form
+    // files: validate CV 
     if (files) {
       const file = files[0];
       if (name === 'CV') {
