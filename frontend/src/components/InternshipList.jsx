@@ -28,7 +28,7 @@ export default function InternshipList({ initialInternships = [] }) {
         setError(null);
       } catch (err) {
         console.error("Error fetching internships:", err);
-        setError("Failed to load internships. Please try again later.");
+        // setError("Failed to load internships. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -53,9 +53,9 @@ export default function InternshipList({ initialInternships = [] }) {
     navigate(`/internship/${internshipId}/apply`);
   };
   
-  if (loading) {
-    return <div className="loading">Kraunami praktikų skelbimai...</div>;
-  }
+  // if (loading) {
+  //   return <div className="loading">Kraunami praktikų skelbimai...</div>;
+  // }
   
   if (error) {
     return <div className="error">{error}</div>;
@@ -76,12 +76,9 @@ export default function InternshipList({ initialInternships = [] }) {
           <div className="requirements">
             <strong>Reikalavimai:</strong> {internship.reikalavimai.substring(0, 100)}...
           </div>
-          <button 
-            onClick={() => handleApply(internship.praktikos_id)}
-            className="apply-button"
-          >
-            Aplikuoti
-          </button>
+          {user.role==="studentas" && <button onClick={() => handleApply(internship.praktikos_id)}>Aplikuoti</button>}
+         
+            
         </div>
       ))}
 

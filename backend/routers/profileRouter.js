@@ -8,6 +8,10 @@ const fs = require('fs');
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 // Logo - 1 MB
 const MAX_LOGO_SIZE = 1 * 1024 * 1024; 
+// Match frontend limits from frontend/src/hooks/useFieldLimits.js
+const MAX_NAME = 15;
+const MAX_SKILLS = 50;
+const MAX_DESC = 300;
 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)){
@@ -110,6 +114,17 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
                     error: 'Vardas ir pavardė negali turėti tarpų'
                 });
             }
+
+            // server-side length checks to match frontend limits
+            if (vardas && vardas.length > MAX_NAME) {
+                return res.status(400).json({ error: `Vardas per ilgas — ne daugiau nei ${MAX_NAME} simbolių` });
+            }
+            if (pavarde && pavarde.length > MAX_NAME) {
+                return res.status(400).json({ error: `Pavardė per ilga — ne daugiau nei ${MAX_NAME} simbolių` });
+            }
+            if (igudziai && igudziai.length > MAX_SKILLS) {
+                return res.status(400).json({ error: `Įgūdžių laukas per ilgas — ne daugiau nei ${MAX_SKILLS} simbolių` });
+            }
             
             if (!req.files?.CV) {
                 return res.status(400).json({
@@ -191,6 +206,13 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
             }
             
             // iterpia informacija i duomenu baze
+            // server-side length checks to match frontend limits
+            if (pavadinimas && pavadinimas.length > MAX_NAME) {
+                return res.status(400).json({ error: `Pavadinimas per ilgas — ne daugiau nei ${MAX_NAME} simbolių` });
+            }
+            if (aprasymas && aprasymas.length > MAX_DESC) {
+                return res.status(400).json({ error: `Aprašymas per ilgas — ne daugiau nei ${MAX_DESC} simbolių` });
+            }
             await pool.query(
                 `INSERT INTO imones_profilis 
                  (imones_id, pavadinimas, aprasymas, logotipo_failo_kelias, logotipo_original_filename)
@@ -261,6 +283,10 @@ router.post('/api/profile-setup', isAuth, async (req, res) => {
         // pagal role nurodoma atitinkama informacija
         if (role === "studentas") {
             const { vardas, pavarde, universitetas, igudziai, CV_failo_kelias } = profileData;
+            // server-side length checks
+            if (vardas && vardas.length > MAX_NAME) return res.status(400).json({ error: `Vardas per ilgas — ne daugiau nei ${MAX_NAME} simbolių` });
+            if (pavarde && pavarde.length > MAX_NAME) return res.status(400).json({ error: `Pavardė per ilga — ne daugiau nei ${MAX_NAME} simbolių` });
+            if (igudziai && igudziai.length > MAX_SKILLS) return res.status(400).json({ error: `Įgūdžių laukas per ilgas — ne daugiau nei ${MAX_SKILLS} simbolių` });
             await pool.query(
                 `INSERT INTO stud_profilis 
                  (studento_id, vardas, pavarde, universitetas, igudziai, CV_failo_kelias)
@@ -269,6 +295,9 @@ router.post('/api/profile-setup', isAuth, async (req, res) => {
             );
         } else if (role === "imone") {
             const { pavadinimas, aprasymas, logotipo_failo_kelias } = profileData;
+            // server-side length checks
+            if (pavadinimas && pavadinimas.length > MAX_NAME) return res.status(400).json({ error: `Pavadinimas per ilgas — ne daugiau nei ${MAX_NAME} simbolių` });
+            if (aprasymas && aprasymas.length > MAX_DESC) return res.status(400).json({ error: `Aprašymas per ilgas — ne daugiau nei ${MAX_DESC} simbolių` });
             await pool.query(
                 `INSERT INTO imones_profilis 
                  (imones_id, pavadinimas, aprasymas, logotipo_failo_kelias)
@@ -314,6 +343,17 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
                 return res.status(400).json({
                     error: 'Vardas ir pavardė negali turėti tarpų'
                 });
+            }
+
+            // server-side length checks
+            if (vardas && vardas.length > MAX_NAME) {
+                return res.status(400).json({ error: `Vardas per ilgas — ne daugiau nei ${MAX_NAME} simbolių` });
+            }
+            if (pavarde && pavarde.length > MAX_NAME) {
+                return res.status(400).json({ error: `Pavardė per ilga — ne daugiau nei ${MAX_NAME} simbolių` });
+            }
+            if (igudziai && igudziai.length > MAX_SKILLS) {
+                return res.status(400).json({ error: `Įgūdžių laukas per ilgas — ne daugiau nei ${MAX_SKILLS} simbolių` });
             }
             
            
@@ -379,6 +419,13 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
                     [pavadinimas, aprasymas, logotipo_failo_kelias, logotipo_originalname, userId]
                 );
             } else {
+                // server-side length checks for non-file update path
+                if (pavadinimas && pavadinimas.length > MAX_NAME) {
+                    return res.status(400).json({ error: `Pavadinimas per ilgas — ne daugiau nei ${MAX_NAME} simbolių` });
+                }
+                if (aprasymas && aprasymas.length > MAX_DESC) {
+                    return res.status(400).json({ error: `Aprašymas per ilgas — ne daugiau nei ${MAX_DESC} simbolių` });
+                }
                 await pool.query(
                     `UPDATE imones_profilis 
                      SET pavadinimas = $1, aprasymas = $2

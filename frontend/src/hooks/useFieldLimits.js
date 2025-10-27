@@ -30,7 +30,7 @@ export function validateFile(name, file, setErrors) {
     }
   }
 
-  // logo/image-specific checks
+  // logo tkrinimas
   if (name === 'logotipo_failo') {
     const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
     if (!allowedImageTypes.includes(file.type)) {
@@ -45,17 +45,15 @@ export function validateFile(name, file, setErrors) {
     }
   }
 
-  // generic image/logo checks could be added here (e.g., for logotipo_failo)
 
-  // If all checks pass, clear any previous file-related error for this field
   setErrors(prev => ({ ...prev, [name]: '' }));
   return true;
 }
 
 /*
-* - apkarpo vertes, viršijančias ribas.
-* - nustato su ilgiu susijusią klaidą (per „setErrors“), kai atliekamas apkarpymas.
-* - nustato klaidą „nėra tarpų“ vardams/pavarde, kai yra tarpas.
+- apkarpo vertes, viršijančias ribas.
+- nustato su ilgiu susijusią klaidą (per „setErrors“), kai atliekamas apkarpymas.
+- nustato klaidą „nėra tarpų“ vardams/pavarde, kai yra tarpas.
 */
 export function enforceLimits(name, value, setErrors) {
   if (value == null) return value;

@@ -48,6 +48,9 @@ app.use(authRouter);
 const profileRouter = require('./routers/profileRouter');
 app.use(profileRouter); 
 
+const praktikosRouter = require('./routers/praktikosRouter');
+app.use(praktikosRouter);
+
 // Filu atsisiuntimo endpointas
 // :filename yra dinaminis parametras, kuris nurodo, kokį failą vartotojas nori atsisiųsti
 app.get('/uploads/:filename', (req, res) => {
@@ -87,7 +90,7 @@ app.get('/uploads/:filename', (req, res) => {
     // inline reiškia, kad failas bus rodomas naršyklėje
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     
-    // TODO: failas turi puti skaitomas is duomenu bazes. pakeisti saugojima
+    // TODO: failas turi buti skaitomas is duomenu bazes. pakeisti saugojima
     fs.createReadStream(filePath).pipe(res);
   });
 });
