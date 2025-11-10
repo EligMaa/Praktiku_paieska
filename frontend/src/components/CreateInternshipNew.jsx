@@ -1,12 +1,16 @@
 import React, { useState, useRef } from 'react';
 import './CreateInternship.css';
 import { INTERNSHIP_TYPES } from '../data/internshipTypes';
+import {CITY_LIST} from '../data/cityList';
+import { useEffect } from 'react';
 
 export default function CreateInternshipNew({ open, onClose, company, onCreated }) {
   const [form, setForm] = useState({
     pavadinimas: '',
     aprasymas: '',
     lokacija: '',
+    miestas: '',
+    expires_at: '',
     tipas: '',
     praktikos_vadovas_vardas: '',
     praktikos_vadovas_pavarde: '',
@@ -19,12 +23,39 @@ export default function CreateInternshipNew({ open, onClose, company, onCreated 
   const [success, setSuccess] = useState(null);
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
+  const [suggestions, setSuggestions] = useState([]);
+
+  // load previously saved addresses for autocomplete
+  useEffect(() => {
+    const saved = localStorage.getItem('savedAddresses');
+    if (saved) setSuggestions(JSON.parse(saved).slice(0, 5));
+  }, []);
 
   if (!open) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
+    if (name === 'lokacija') {
+      // build simple suggestions: previous addresses plus city name matches
+      const input = value.trim().toLowerCase();
+      const prev = JSON.parse(localStorage.getItem('savedAddresses') || '[]');
+      const matchedPrev = prev.filter(a => a.toLowerCase().includes(input)).slice(0,3);
+      const cityMatches = CITY_LIST.filter(c => c.toLowerCase().includes(input)).slice(0,3);
+      // combine and dedupe
+      const combined = Array.from(new Set([...matchedPrev, ...cityMatches]));
+      setSuggestions(combined);
+    }
+  };
+
+  const pickSuggestion = (s) => {
+    // if suggestion is a city name, set miestas; otherwise set lokacija
+    if (CITY_LIST.includes(s)) {
+      setForm(prev => ({ ...prev, miestas: s }));
+    } else {
+      setForm(prev => ({ ...prev, lokacija: s }));
+    }
+    setSuggestions([]);
   };
 
   const handleSubmit = async (e) => {
@@ -37,9 +68,29 @@ export default function CreateInternshipNew({ open, onClose, company, onCreated 
       return;
     }
 
+    if (!form.miestas) {
+      setError('Pasirinkite miestą');
+      return;
+    }
+
     if (!form.tipas) {
       setError('Pasirinkite praktikos sritį / tipą');
       return;
+    }
+
+    // optional expiration validation (if provided, must be a future date)
+    if (form.expires_at) {
+      const chosen = new Date(form.expires_at);
+      const now = new Date();
+      if (isNaN(chosen.getTime()) || chosen <= now) {
+        setError('Pasirinkite galiojančią ateities datą pasibaigimui');
+        return;
+      }
+      // disallow absurdly large years (>2100)
+      if (chosen.getFullYear() > 2100) {
+        setError('Pasirinkite datą ne vėlesnę nei 2100-12-31');
+        return;
+      }
     }
 
     const nameRe = /^[A-Za-z '\-]+$/;
@@ -58,17 +109,23 @@ export default function CreateInternshipNew({ open, onClose, company, onCreated 
       return;
     }
 
-    const phoneRe = /^[0-9+()\-\s]*$/;
-    if (form.praktikos_vadovas_tel && !phoneRe.test(form.praktikos_vadovas_tel)) {
-      setError('Telefonas gali turėti tik skaičius, tarpus, +, -, ( )');
-      return;
+    // Phone must start with +370 and be exactly 12 characters (including the +)
+    const phoneStrictRe = /^\+370\d{8}$/;
+    if (form.praktikos_vadovas_tel) {
+      const phoneTrim = form.praktikos_vadovas_tel.trim();
+      if (!phoneStrictRe.test(phoneTrim)) {
+        setError('Telefono numeris turi prasidėti +370 ir būti 12 simbolių, pvz. +37069696996');
+        return;
+      }
     }
 
     const fd = new FormData();
     fd.append('pavadinimas', form.pavadinimas);
     fd.append('aprasymas', form.aprasymas);
     fd.append('lokacija', form.lokacija);
-  fd.append('tipas', form.tipas);
+    fd.append('miestas', form.miestas);
+    fd.append('expires_at', form.expires_at || '');
+    fd.append('tipas', form.tipas);
     fd.append('reikalavimai', form.reikalavimai || '');
     fd.append('vadovas_vardas', form.praktikos_vadovas_vardas);
     fd.append('vadovas_pavarde', form.praktikos_vadovas_pavarde);
@@ -95,10 +152,32 @@ export default function CreateInternshipNew({ open, onClose, company, onCreated 
       const created = await res.json();
       setSuccess('Praktikos skelbimas sukurtas');
       setToast('Praktikos skelbimas sukurtas');
-      setForm({ pavadinimas: '', aprasymas: '', lokacija: '', praktikos_vadovas_vardas: '', praktikos_vadovas_pavarde: '', praktikos_vadovas_el_pastas: '', praktikos_vadovas_tel: '', reikalavimai: '' });
-  // reset tipas as well
-  setForm(prev => ({ ...prev, tipas: '' }));
+      // reset entire form in one go (include miestas and tipas)
+      setForm({
+        pavadinimas: '',
+        aprasymas: '',
+        lokacija: '',
+        miestas: '',
+        expires_at: '',
+        tipas: '',
+        praktikos_vadovas_vardas: '',
+        praktikos_vadovas_pavarde: '',
+        praktikos_vadovas_el_pastas: '',
+        praktikos_vadovas_tel: '',
+        reikalavimai: ''
+      });
       if (fileRef.current) fileRef.current.value = null;
+      // save address in localStorage for future autocomplete suggestions
+      try {
+        const saved = JSON.parse(localStorage.getItem('savedAddresses') || '[]');
+        const entry = `${form.miestas} — ${form.lokacija}`.trim();
+        if (entry && !saved.includes(entry)) {
+          saved.unshift(entry);
+          localStorage.setItem('savedAddresses', JSON.stringify(saved.slice(0, 20)));
+        }
+      } catch (e) {
+        // ignore localStorage errors
+      }
       if (onCreated) onCreated(created);
       setTimeout(() => {
         setToast(null);
@@ -143,10 +222,32 @@ export default function CreateInternshipNew({ open, onClose, company, onCreated 
           </div>
 
           <div className="create-internship-row">
-            <label>Lokacija<br />
-              <input name="lokacija" value={form.lokacija} onChange={handleChange} />
+            <label>Adresas<br />
+              <input name="lokacija" value={form.lokacija} onChange={handleChange} autoComplete="off" />
+              {/* {suggestions.length > 0 && (
+                <ul className="address-suggestions">
+                  {suggestions.map(s => (
+                    <li key={s} onClick={() => pickSuggestion(s)}>{s}</li>
+                  ))}
+                </ul>
+              )} */}
+            </label>
+
+            <label>Miestas<br />
+              <select name="miestas" value={form.miestas} onChange={handleChange}>
+                <option value="">Pasirinkite</option>
+                {CITY_LIST.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>Galioja iki (data)<br />
+              <input type="date" name="expires_at" value={form.expires_at} onChange={handleChange} max="2100-12-31" />
             </label>
           </div>
+
+         
 
           <div className="create-internship-row">
             <label>Reikalavimai (neprivaloma)<br />
@@ -171,7 +272,7 @@ export default function CreateInternshipNew({ open, onClose, company, onCreated 
               <input name="praktikos_vadovas_el_pastas" value={form.praktikos_vadovas_el_pastas} onChange={handleChange} />
             </label>
             <label>Tel. numeris<br />
-              <input name="praktikos_vadovas_tel" value={form.praktikos_vadovas_tel} onChange={handleChange} />
+              <input name="praktikos_vadovas_tel" value={form.praktikos_vadovas_tel} onChange={handleChange} maxLength={12} placeholder="+3706xxxxxxx" />
             </label>
           </div>
 

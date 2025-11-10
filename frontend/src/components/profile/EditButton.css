@@ -3,10 +3,10 @@
   margin-bottom: 8px;
   padding: 8px 24px;
   border-radius: 8px;
-  background: #e7f0fe;
+  background: #2d2d2d;
   cursor: pointer;
-  color: #000000;
-  border: 1px solid #e7f0fe;
+  color: #cacaca;
+  border: 1px solid rgba(153, 153, 153, 0.2);
   font-size: 14px;
   font-weight: 500;
   display: flex;
@@ -16,8 +16,9 @@
 }
 
 .edit-button:hover {
-  background: #d0e4fd;
-  border: 1px solid #d0e4fd;
+  background: #191919;
+  border: 1px solid #2980b9;
+  color: white;
 }
 
 .edit-icon {

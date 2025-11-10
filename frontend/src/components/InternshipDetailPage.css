@@ -1,0 +1,88 @@
+/* Layout matching the provided mock: large left panel + two stacked right panels */
+.internship-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+  align-items: start;
+  padding: 24px;
+}
+
+.detail-left {
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 28px;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #fff;
+}
+
+.detail-left h1, .detail-left h2 {
+  margin: 0 0 12px 0;
+}
+
+.detail-left .description {
+  margin-top: 12px;
+  color: #e6e6e6;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.apply-row {
+  display:flex;
+  justify-content:center;
+  margin-top: 18px;
+}
+.apply-row button {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    padding: 8px 24px;
+    border-radius: 8px;
+    background: #2d2d2d;
+    cursor: pointer;
+    color: #cacaca;
+    border: 1px solid rgba(153, 153, 153, 0.2);
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.apply-row button:hover {
+    background: #191919;
+    border: 1px solid #2980b9;
+    color: white;
+}
+
+.detail-right {
+  display:flex;
+  color: #fff;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card {
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 18px;
+  min-height: 140px;
+}
+
+.card h3 {
+  margin: 0 0 8px 0;
+}
+
+.meta-line {
+  color: #7a7a7a;
+  margin: 6px 0;
+}
+
+/* responsive */
+@media (max-width: 900px) {
+  .internship-detail-grid { grid-template-columns: 1fr; }
+  .detail-right { flex-direction: row; overflow-x: auto; }
+  .card { min-width: 280px; }
+}

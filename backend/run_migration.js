@@ -15,12 +15,18 @@ async function runMigration() {
   try {
     console.log('Starting database migration...');
     
-    // Read SQL file
-    const sqlFilePath = path.join(__dirname, 'db_migrations', 'jobs_tables.sql');
-    const sql = fs.readFileSync(sqlFilePath, 'utf8');
-    
-    // Execute SQL
-    await pool.query(sql);
+    // Execute all SQL files in the db_migrations directory in alphabetical order
+    const migrationsDir = path.join(__dirname, 'db_migrations');
+    const files = fs.readdirSync(migrationsDir)
+      .filter(f => f.toLowerCase().endsWith('.sql'))
+      .sort();
+
+    for (const f of files) {
+      const sqlFilePath = path.join(migrationsDir, f);
+      console.log('Running migration:', f);
+      const sql = fs.readFileSync(sqlFilePath, 'utf8');
+      await pool.query(sql);
+    }
     
     console.log('Migration completed successfully!');
   } catch (err) {

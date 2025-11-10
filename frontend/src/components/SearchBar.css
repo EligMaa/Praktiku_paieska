@@ -1,0 +1,69 @@
+/* Styles for the SearchBar component */
+.search-form {
+    display: flex;
+    width: 100%;
+    max-width: 800px;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1 1 auto;
+    padding: 0.7rem 1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.06);
+    font-size: 1rem;
+    background-color: transparent;
+    color: inherit;
+    background-color:rgb(59, 59, 59);
+}
+
+.search-input::selection {
+    border: 1px solid rgba(228, 48, 48, 2);
+}   
+
+
+.search-select {
+    padding: 0.6rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: transparent;
+    color: inherit;
+    background-color: rgb(59, 59, 59);
+}
+
+.search-button {
+    background-color: rgba(255,255,255,0.06);
+    color: inherit;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    background-color: rgb(59, 59, 59);
+}
+
+.search-button:hover {
+    background: 255,255,255,0.06;
+    border: 1px solid #2980b9;
+    color: white;
+}
+
+
+@media (max-width: 720px) {
+    .search-form {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+    }
+    .search-button {
+            width: 100%;
+    }
+}
+
+.search-error {
+    color: #b00020;
+    font-size: 12px;
+    margin-top: 6px;
+}

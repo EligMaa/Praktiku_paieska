@@ -4,10 +4,9 @@ import { useUser } from "./UserContext";
 import SearchBar from "./SearchBar";
 import "./Header.css";
 
-export default function Header() {
+export default function Header({ onSearch }) {
   const navigate = useNavigate();
   const { user } = useUser();
-  const [search, setSearch] = useState("");
 
   // Define all styles as objects for inline styling
   const styles = {
@@ -120,7 +119,7 @@ export default function Header() {
         </div>
         
         <div style={styles.headerBottom}>
-          <SearchBar onSearch={setSearch} />
+          <SearchBar onSearch={onSearch} />
         </div>
       </div>
     </header>

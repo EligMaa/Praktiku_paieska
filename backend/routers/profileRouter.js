@@ -132,10 +132,10 @@ router.post('/api/profile', isAuth, uploadFiles, async (req, res) => {
                 });
             }
 
-            // server-side file size check (defensive)
+            // server-side failu tikrinimas
             const cvFile = req.files.CV[0];
                 if (cvFile.size > MAX_FILE_SIZE) {
-                // remove uploaded file to avoid storing oversized files
+                // pasalina per diddeli faila
                 fs.unlink(path.join(uploadsDir, cvFile.filename), (unlinkErr) => {
                     if (unlinkErr) console.error('Failed to remove oversized CV:', unlinkErr);
                 });
@@ -419,7 +419,7 @@ router.put('/api/profile/update', isAuth, uploadFiles, async (req, res) => {
                     [pavadinimas, aprasymas, logotipo_failo_kelias, logotipo_originalname, userId]
                 );
             } else {
-                // server-side length checks for non-file update path
+                // server-side ilgumo patikrinimas
                 if (pavadinimas && pavadinimas.length > MAX_NAME) {
                     return res.status(400).json({ error: `Pavadinimas per ilgas — ne daugiau nei ${MAX_NAME} simbolių` });
                 }

@@ -10,8 +10,11 @@ import LogoutButton from './profile/LogoutButton';
 import EditButton from './profile/EditButton';
 import CreateInternshipNew from './CreateInternshipNew.jsx';
 import InternshipList from './InternshipList';
+import InternshipDetailModal from './InternshipDetailModal';
+import { getMyApplications } from '../services/internshipService';
 
 import './profile/Profile.css';
+import './profile/EditButton.css';
 
 export default function Profile() {
   const { user, setUser } = useUser();
@@ -20,6 +23,10 @@ export default function Profile() {
   const [profileError, setProfileError] = useState(null);
   const [showCreateInternship, setShowCreateInternship] = useState(false);
   const [companyInternships, setCompanyInternships] = useState([]);
+  const [studentApplications, setStudentApplications] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedInternshipId, setSelectedInternshipId] = useState(null);
 
   // fetch company internships for companies
   useEffect(() => {
@@ -39,6 +46,21 @@ export default function Profile() {
 
     fetchCompanyInternships();
   }, [user?.loggedIn, user?.role, user?.id]);
+
+  // fetch student applications for students
+  useEffect(() => {
+    const fetchStudentApplications = async () => {
+      if (user?.loggedIn && user.role === 'studentas') {
+        try {
+          const apps = await getMyApplications();
+          setStudentApplications(apps || []);
+        } catch (err) {
+          console.error('Failed to fetch student applications', err);
+        }
+      }
+    };
+    fetchStudentApplications();
+  }, [user?.loggedIn, user?.role]);
 
   useEffect(() => {
     if (!user) {
@@ -120,13 +142,14 @@ export default function Profile() {
     <div className="profile-container">
       <ProfileHeader user={user} />
       
-      <div className="profile-content">
-        <BasicInfo user={user} />
+      <div className="profile-main">
+        <div className="profile-content">
+          <BasicInfo user={user} />
         {user.role === 'studentas' && <StudentInfo user={user} />}
         {user.role === 'imone' && <CompanyInfo user={user} />}
         {user.role === 'imone' && (
           <div style={{ marginTop: 12 }}>
-            <button className="create-internship-btn" onClick={() => setShowCreateInternship(true)}>
+            <button className="edit-button" onClick={() => setShowCreateInternship(true)}>
               Sukurti praktiką
             </button>
           </div>
@@ -142,12 +165,55 @@ export default function Profile() {
             setCompanyInternships(prev => [created, ...prev]);
           }}
         />
-        {user.role === 'imone' && (
-          <div style={{ marginTop: 18 }}>
-            <h4>Jūsų praktikos skelbimai</h4>
-            <InternshipList initialInternships={companyInternships} />
-          </div>
-        )}
+        </div>
+
+        <div className="profile-sidebar">
+          {/* Sidebar toggle box */}
+          {user.role === 'imone' && (
+            <div className={`sidebar-box ${sidebarOpen ? 'open' : ''}`}>
+              <div className="sidebar-text" onClick={() => setSidebarOpen(o => !o)}>
+                Jūsų sukurti praktikos pasiūlymai {sidebarOpen ? '▾' : '▸'}
+              </div>
+              {sidebarOpen && (
+                <div className="sidebar-list">
+                  {companyInternships.length === 0 ? (
+                    <div className="sidebar-empty">Jūs neturite sukurtų praktikų.</div>
+                  ) : (
+                    companyInternships.map(i => (
+                      <div key={i.praktikos_id} className="sidebar-item" onClick={() => { setSelectedInternshipId(i.praktikos_id); setDetailOpen(true); }}>
+                        <div className="sidebar-item-title">{i.pavadinimas}</div>
+                        <div className="sidebar-item-desc">{i.aprasymas.substring(0, 120)}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {user.role === 'studentas' && (
+            <div className={`sidebar-box ${sidebarOpen ? 'open' : ''}`}>
+              <div className="sidebar-text" onClick={() => setSidebarOpen(o => !o)}>
+                Praktikos į kurias aplikavote {sidebarOpen ? '▾' : '▸'}
+              </div>
+              {sidebarOpen && (
+                <div className="sidebar-list">
+                  {studentApplications.length === 0 ? (
+                    <div className="sidebar-empty">Kol kas neturite paraiškų.</div>
+                  ) : (
+                    studentApplications.map(a => (
+                      <div key={a.application_id || a.id} className="sidebar-item" onClick={() => { setSelectedInternshipId(a.praktikos_id || a.job_id || a.id); setDetailOpen(true); }}>
+                        <div className="sidebar-item-title">{a.job_title || a.pavadinimas || a.title}</div>
+                        <div className="sidebar-item-desc">{(a.company_name || a.imones_pavadinimas || '') + (a.location ? ' • ' + a.location : '')}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <InternshipDetailModal open={detailOpen} internshipId={selectedInternshipId} onClose={() => { setDetailOpen(false); setSelectedInternshipId(null); }} />
       </div>
     </div>
   );
