@@ -1,3 +1,45 @@
+.internship-list.internship-skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.internship-card.skeleton {
+  background: linear-gradient(180deg, #fbfbfb, #ffffff);
+  border: 1px solid #f0f0f0;
+  padding: 1rem 0.9rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  overflow: hidden;
+}
+
+.internship-card.skeleton .skeleton-title,
+.internship-card.skeleton .skeleton-sub,
+.internship-card.skeleton .skeleton-line {
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(230,230,230,0.9) 25%, rgba(245,245,245,0.9) 50%, rgba(230,230,230,0.9) 75%);
+  background-size: 250% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.internship-card.skeleton .skeleton-title { width: 60%; margin-bottom: 8px; }
+.internship-card.skeleton .skeleton-sub { width: 40%; margin-bottom: 12px; }
+.internship-card.skeleton .skeleton-line {
+  height: 10px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Optional smaller devices tweak */
+@media (max-width: 480px) {
+  .internship-card.skeleton { padding: 0.75rem; }
+  .internship-card.skeleton .skeleton-title { width: 80%; }
+}
 .internship-list {
   display: flex;
   flex-direction: column;

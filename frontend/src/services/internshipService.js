@@ -1,19 +1,25 @@
 // internshipService.js - Services for internship listings and applications
 
-const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_SERVER_URL;
 
-// Get all internship listings
-export async function getAllInternships() {
+// Get visus praktikų skelbimus su filtrais
+export async function getAllInternships(filters = {}) {
   try {
-    const response = await fetch(`${API_URL}/api/praktikos`, {
+    const params = new URLSearchParams();
+    if (filters.query) params.append('q', filters.query);
+    if (filters.tipas) params.append('tipas', filters.tipas);
+    if (filters.miestas) params.append('miestas', filters.miestas);
+
+    const url = `${API_URL}/api/praktikos${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await fetch(url, {
       method: 'GET',
       credentials: 'include',
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch internships: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching internships:', error);
@@ -53,12 +59,12 @@ export async function applyForInternship(internshipId, application = {}) {
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to apply for internship: ${response.status}`);
+      throw new Error(`Nepavyko aplikuoti i praktika: ${response.status}`);
     }
     
     return await response.json();
   } catch (error) {
-    console.error(`Error applying for internship #${internshipId}:`, error);
+    console.error(`Error aplikuojant i praktika #${internshipId}:`, error);
     throw error;
   }
 }
@@ -95,12 +101,12 @@ export async function createInternship(internshipData) {
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to create internship: ${response.status}`);
+      throw new Error(`Nepavyko sukurti praktikos: ${response.status}`);
     }
     
     return await response.json();
   } catch (error) {
-    console.error('Error creating internship:', error);
+    console.error('Error kuriant praktikos:', error);
     throw error;
   }
 }

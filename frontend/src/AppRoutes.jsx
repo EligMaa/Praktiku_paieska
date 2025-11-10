@@ -11,6 +11,7 @@ import PrivateRoute from './components/PrivateRoute.jsx';
 
 // Internship-related components
 import InternshipList from './components/InternshipList.jsx';
+import InternshipDetailPage from './components/InternshipDetailPage.jsx';
 import MyApplications from './components/student/MyApplications.jsx';
 
 const AppRoutes = () => (
@@ -25,6 +26,7 @@ const AppRoutes = () => (
     
     {/* Internship routes */}
     <Route path="/internships" element={<InternshipList />} />
+  <Route path="/internship/:id" element={<InternshipDetailPage />} />
     <Route path="/my-applications" element={<PrivateRoute requiredRole="studentas"><MyApplications /></PrivateRoute>} />
   </Routes>
 );

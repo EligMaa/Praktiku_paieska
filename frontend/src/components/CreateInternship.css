@@ -70,6 +70,24 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.address-suggestions {
+  list-style: none;
+  margin: 6px 0 0 0;
+  padding: 6px 0;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  max-height: 160px;
+  overflow-y: auto;
+  border-radius: 4px;
+}
+.address-suggestions li {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.address-suggestions li:hover { background: #f4f4f4; }
+
+.create-internship-preview { color: #333; font-size: 0.95rem; }
+
 .create-internship-row input:focus,
 .create-internship-row textarea:focus {
   border-color: #2563eb;
@@ -136,6 +154,7 @@
 
 .create-internship-buttons button[type="button"]:hover {
   background: #d1d5db;
+  
 }
 
 /* animacija */
