@@ -76,7 +76,9 @@ export default function InternshipDetailPage() {
         <div>
           <div className="apply-row">
             {user?.role === 'studentas' ? (
-              <button onClick={handleApply} disabled={applying}>{applying ? 'Aplikuojama...' : 'Aplikuoti'}</button>
+              <button onClick={handleApply} disabled={applying}>{applying ? 'Aplikuojama...' : 'Aplikuoti'}
+              if(applying)
+              </button>
             ) : null}
           </div>
           <div className="meta-line"><strong>Iš viso aplikavo:</strong> {internship.application_count || 0}</div>

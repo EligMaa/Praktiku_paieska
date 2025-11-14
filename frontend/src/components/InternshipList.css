@@ -1,8 +1,76 @@
+.btn{
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #c5c5c5;
+  margin-top: 24px;
+  padding: 8px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: black;
+  border: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+}
+
+.btn:hover {
+  background: #191919;
+  border: 1px solid #2980b9;
+}
+
+.puslapiavimo-container {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent; /* keep container static */
+  margin-top: 24px;
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+
+.page-btn {
+  min-width: 36px;
+  padding: 8px 12px;
+  margin: 0 6px;
+  border-radius: 8px;
+  background-color: #111; /* dark button */
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #000;
+  /* transform: translateY(-1px); */
+  border: 2px solid #2980b9;
+}
+
+.page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.page-btn.active {
+  font-weight: 700;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.25) inset;
+}
+
+
+
+
 .internship-list.internship-skeletons {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
+
 
 .internship-card.skeleton {
   background: linear-gradient(180deg, #fbfbfb, #ffffff);
@@ -12,6 +80,7 @@
   box-shadow: 0 1px 0 rgba(0,0,0,0.02);
   overflow: hidden;
 }
+
 
 .internship-card.skeleton .skeleton-title,
 .internship-card.skeleton .skeleton-sub,
