@@ -12,9 +12,8 @@ export default function SearchBar({ onSearch }) {
   // atideda atnaujinimo laika funkcijos iskvietimui pagal query arba tipas 
   const debouncedQuery = useDebounce(query, 400);
   const debouncedTipas = useDebounce(tipas, 400);
-  const debouncedMiestas = useDebounce(miestas, 400);
+  const debouncedMiestas = useDebounce(miestas, 400); 
 
-  // visual styling moved to SearchBar.css
   const styles = {};
 
   const handleSubmit = (e) => {
@@ -41,7 +40,7 @@ export default function SearchBar({ onSearch }) {
     <form onSubmit={handleSubmit} className="search-form">
       <input
         type="text"
-        placeholder="Search or filter"
+        placeholder="Paieska..."
         value={query}
         maxLength={60}
         onChange={(e) => {
@@ -74,7 +73,7 @@ export default function SearchBar({ onSearch }) {
         type="submit"
         className="search-button"
       >
-        Show
+        Ieskoti
       </button>
     </form>
   );

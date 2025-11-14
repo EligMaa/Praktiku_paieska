@@ -9,6 +9,9 @@ export default function InternshipList({ initialInternships = [], filters = {} }
   const [internships, setInternships] = useState(initialInternships);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
   const { user } = useUser();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -26,8 +29,15 @@ export default function InternshipList({ initialInternships = [], filters = {} }
     const fetchInternships = async () => {
       try {
         setLoading(true);
-        const fetchedInternships = await getAllInternships(filters);
-        setInternships(fetchedInternships);
+        const payload = await getAllInternships(Object.assign({}, filters, { page }));
+        // payload may be either array (legacy) or paginated object { items, total, page, per_page, total_pages }
+        if (Array.isArray(payload)) {
+          setInternships(payload);
+          setTotalPages(1);
+        } else {
+          setInternships(payload.items || []);
+          setTotalPages(payload.total_pages || 1);
+        }
         setError(null);
       } catch (err) {
         console.error("Error fetchinant praktikas:", err);
@@ -38,7 +48,12 @@ export default function InternshipList({ initialInternships = [], filters = {} }
 
     fetchInternships();
     // depend on the length of initialInternships and filter values (primitive)
-  }, [initialInternships.length, filters.query, filters.tipas, filters.miestas]);
+  }, [initialInternships.length, filters.query, filters.tipas, filters.miestas, page]);
+
+  // PUSLAPIAVIMUI, jei uzdedamas naujas filtras nueinama i pirma puslapi
+  useEffect(() => {
+    setPage(1);
+  }, [filters.query, filters.tipas, filters.miestas]);
   
   const handleApply = async (internshipId) => {
     if (!user || !user.loggedIn) {
@@ -64,7 +79,7 @@ export default function InternshipList({ initialInternships = [], filters = {} }
     // simple skeletons while loading
     return (
       <div className="internship-list internship-skeletons">
-        {[0,1,2].map(i => (
+        {[0,1,2].map(i => ( 
           <div key={i} className="internship-card skeleton">
             <div className="skeleton-title" style={{height:20, width:'60%', background:'#ddd', marginBottom:8}} />
             <div className="skeleton-sub" style={{height:12, width:'40%', background:'#e6e6e6', marginBottom:12}} />
@@ -100,6 +115,21 @@ export default function InternshipList({ initialInternships = [], filters = {} }
           {/* {user.role==="studentas" && <button onClick={(e) => { e.stopPropagation(); handleApply(internship.praktikos_id); }}>Aplikuoti</button>} */}
         </div>
       ))}
+
+      
+      {/* PUSLAPIAVIMO mygtukai */}
+      {totalPages > 1 && (
+          <div className="puslapiavimo-container" style={{display: 'flex', justifyContent: 'center', marginTop: 16, gap:8}}>
+            <button className="page-btn" disabled={page <= 1} onClick={(e) => { e.stopPropagation(); setPage(p => Math.max(1, p - 1)); }}>&laquo; Ankstesnis</button>
+            {[...Array(totalPages)].map((_, idx) => {
+              const p = idx + 1;
+              return (
+                <button key={p} className={`page-btn ${p===page ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setPage(p); }} aria-current={p===page ? 'page' : undefined}>{p}</button>
+              );
+            })}
+            <button className="page-btn" disabled={page >= totalPages} onClick={(e) => { e.stopPropagation(); setPage(p => Math.min(totalPages, p + 1)); }}>Kitas &raquo;</button>
+          </div>
+      )}
 
       <AuthPromptModal
         open={showAuthModal}

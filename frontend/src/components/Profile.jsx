@@ -36,7 +36,9 @@ export default function Profile() {
           const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/praktikos?imones_id=${user.id}`, { credentials: 'include' });
           if (res.ok) {
             const data = await res.json();
-            setCompanyInternships(data);
+            // PUSLAPIAVIMUI
+            if (Array.isArray(data)) setCompanyInternships(data);
+            else setCompanyInternships(data.items || []);
           }
         } catch (err) {
           console.error('Failed to fetch company internships', err);

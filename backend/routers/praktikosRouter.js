@@ -33,14 +33,38 @@ const upload = multer({
   }
 });
 
+// Multer error handler for this router: convert upload errors to 400 with message
+router.use((err, req, res, next) => {
+  // Multer's errors are instances of MulterError, but fileFilter uses Error; handle both
+  if (err && (err.name === 'MulterError' || String(err.message).toLowerCase().includes('cv') || String(err.message).toLowerCase().includes('file'))) {
+    console.warn('Upload error:', err.message || err);
+    return res.status(400).json({ error: err.message || 'File upload error' });
+  }
+  return next(err);
+});
+
+
+// grazina praktiku sarasa pagal filtrus
 // GET /api/praktikos[?imones_id=&q=&tipas=&miestas=]
 router.get('/api/praktikos', async (req, res) => {
   try {
     const { imones_id, q: searchQuery, tipas, miestas } = req.query;
-  let base = `SELECT p.*, ip.pavadinimas AS imones_pavadinimas, ip.logotipo_failo_kelias AS imones_logotipas, 
+    // PUSLAPIAVIMAS
+    let page = parseInt(req.query.page, 10) || 1;
+    let per_page = parseInt(req.query.per_page, 10) || 10; // numatyta 10 įrašu per puslapi
+    if (page < 1) page = 1;
+
+    // be viršutinio limito klientas galėtų siųsti per_page=100000 
+    // ir priversti DB grąžinti daug eilučių, sunaudoti daug atminties ir išjungti serverį
+    const MAX_PER_PAGE = 100;
+    if (per_page < 1) per_page = 10;
+    if (per_page > MAX_PER_PAGE) per_page = MAX_PER_PAGE;
+
+    const selectCols = `p.*, ip.pavadinimas AS imones_pavadinimas, ip.logotipo_failo_kelias AS imones_logotipas,
                  v.vardas AS vadovas_vardas, v.pavarde AS vadovas_pavarde, v.el_pastas AS vadovas_email, v.telefonas AS vadovas_telefonas, v.CV_failo_kelias AS vadovas_cv_failo,
-                 (SELECT COUNT(*) FROM praktikos_paraiska pp WHERE pp.praktikos_id = p.praktikos_id) AS application_count
-       FROM praktikos_skelbimas p
+                 (SELECT COUNT(*) FROM praktikos_paraiska pp WHERE pp.praktikos_id = p.praktikos_id) AS application_count`;
+
+    const fromSql = `FROM praktikos_skelbimas p
        LEFT JOIN imones_profilis ip ON p.imones_id = ip.imones_id
        LEFT JOIN praktikos_vadovas v ON p.praktikos_vadovo_id = v.vadovo_id`;
 
@@ -63,26 +87,64 @@ router.get('/api/praktikos', async (req, res) => {
       params.push(miestas);
     }
 
+    // jei ieskoma pagal uzklausa
     if (searchQuery) {
-      // iesko pavadinime, aprasyme, imones pavadinime, miestame, lokacijaje ir vadovo info
-      whereClauses.push(`(
-        p.pavadinimas ILIKE $${idx} OR
-        p.aprasymas ILIKE $${idx} OR
-        ip.pavadinimas ILIKE $${idx} OR
-        p.miestas ILIKE $${idx} OR
-        p.lokacija ILIKE $${idx} OR
-        v.vardas ILIKE $${idx} OR
-        v.pavarde ILIKE $${idx} OR
-        v.el_pastas ILIKE $${idx}
-      )`);
-      params.push(`%${searchQuery}%`);
-      idx++;
+      // padalina vartotojo uzklausa i atskirus zodzius
+  
+      const raw = String(searchQuery || '').trim();
+      const mode = req.query.searchMode === 'any' ? 'any' : 'all';
+      // split on whitespace, remove empty tokens, limit to avoid too large queries
+      let words = raw.split(/\s+/).map(w => w.trim()).filter(Boolean);
+      const MAX_WORDS = 10;
+      if (words.length > MAX_WORDS) words = words.slice(0, MAX_WORDS);
+
+      if (words.length > 0) {
+
+        const wordClauses = [];
+        for (const word of words) {
+          const paramIndex = idx;
+          // push the parameter for this word (used by all columns in this subclause)
+          params.push(`%${word}%`);
+          idx++;
+          // build the OR block for this word
+          wordClauses.push(`(
+            p.pavadinimas ILIKE $${paramIndex} OR
+            p.aprasymas ILIKE $${paramIndex} OR
+            p.tipas ILIKE $${paramIndex} OR
+            p.aprasymas ILIKE $${paramIndex} OR
+            ip.pavadinimas ILIKE $${paramIndex} OR
+            p.miestas ILIKE $${paramIndex} OR
+            p.lokacija ILIKE $${paramIndex} OR
+            v.vardas ILIKE $${paramIndex} OR
+            v.pavarde ILIKE $${paramIndex} OR
+            v.el_pastas ILIKE $${paramIndex}
+          )`);
+        }
+
+        const joiner = mode === 'any' ? ' OR ' : ' AND ';
+        whereClauses.push('(' + wordClauses.join(joiner) + ')');
+      }
     }
 
     const whereSql = whereClauses.length > 0 ? ' WHERE ' + whereClauses.join(' AND ') : '';
-    const finalSql = base + whereSql + ' ORDER BY p.praktikos_id DESC';
+
+    // isgauti bendrą įrašų skaiciu
+    const countSql = `SELECT COUNT(*)::int as total ${fromSql} ${whereSql}`;
+    const countRes = await pool.query(countSql, params);
+    const total = countRes.rows[0] ? parseInt(countRes.rows[0].total, 10) : 0;
+
+    // PUSLAPIAVIMAS
+    const offset = (page - 1) * per_page;
+    params.push(per_page);
+    params.push(offset);
+
+    const finalSql = `SELECT ${selectCols} ${fromSql} ${whereSql} ORDER BY p.praktikos_id DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
     const result = await pool.query(finalSql, params);
-    res.json(result.rows);
+    
+    // PUSLAPIAVIMUI
+    const total_pages = Math.ceil(total / per_page);
+
+    res.json({ items: result.rows, total, page, per_page, total_pages });
   } catch (err) {
     console.error('Error fetching internships:', err);
     res.status(500).json({ error: 'Server error' });
@@ -127,29 +189,78 @@ router.post('/api/praktikos', isAuth, upload.single('vadovas_CV'), async (req, r
 
   const { pavadinimas, aprasymas, lokacija, miestas, expires_at, tipas, reikalavimai, vadovas_vardas, vadovas_pavarde, vadovas_el_pastas, vadovas_telefonas } = req.body;
 
+    // Server-side validation (mirror client rules)
+    const fieldErrors = {};
+    const pushFieldError = (k, m) => { fieldErrors[k] = m; };
 
-    // Basic validation
-    if (!pavadinimas || !aprasymas || !lokacija || !miestas) {
-      return res.status(400).json({ error: 'Missing required internship fields (pavadinimas, aprasymas, lokacija, miestas)' });
-    }
+    // required fields
+    if (!pavadinimas || !String(pavadinimas).trim()) pushFieldError('pavadinimas', 'Pavadinimas yra privalomas');
+    if (!aprasymas || !String(aprasymas).trim()) pushFieldError('aprasymas', 'Aprašymas yra privalomas');
+    if (!lokacija || !String(lokacija).trim()) pushFieldError('lokacija', 'Adresas yra privalomas');
+    if (!miestas || !String(miestas).trim()) pushFieldError('miestas', 'Pasirinkite miestą');
+    if (!reikalavimai || !String(reikalavimai).trim()) pushFieldError('reikalavimai', 'Reikalavimai yra privalomi');
+    if (!tipas || !String(tipas).trim()) pushFieldError('tipas', 'Pasirinkite praktikos sritį / tipą');
 
-    if (!tipas) {
-      return res.status(400).json({ error: 'Pasirinkite praktikos sritį / tipą' });
-    }
+    // length limits
+    if (pavadinimas && String(pavadinimas).trim().length > 50) pushFieldError('pavadinimas', 'Pavadinimas negali viršyti 50 simbolių');
+    if (aprasymas && String(aprasymas).trim().length > 1000) pushFieldError('aprasymas', 'Aprašymas negali viršyti 1000 simbolių');
+    if (reikalavimai && String(reikalavimai).trim().length > 1000) pushFieldError('reikalavimai', 'Reikalavimai negali viršyti 1000 simbolių');
+    if (lokacija && String(lokacija).trim().length > 50) pushFieldError('lokacija', 'Adresas negali viršyti 50 simbolių');
 
-    // normalize and validate tipas against allowed list
-    const tipasNormalized = String(tipas).trim();
-    if (!INTERN_TYPES.includes(tipasNormalized)) {
-      return res.status(400).json({ error: 'Neteisingas praktikos tipas' });
-    }
+    // address must contain at least one digit
+    if (lokacija && !/\d/.test(String(lokacija))) pushFieldError('lokacija', 'Adresas turi turėti namo numerį');
 
-    if (!vadovas_vardas || !vadovas_pavarde || !vadovas_el_pastas) {
-      return res.status(400).json({ error: 'Missing required vadovas fields (vardas, pavarde, el_pastas)'});
-    }
+    // vadovas fields required and length
+  if (!vadovas_vardas || !String(vadovas_vardas).trim()) pushFieldError('praktikos_vadovas_vardas', 'Vadovo vardas yra privalomas');
+  if (!vadovas_pavarde || !String(vadovas_pavarde).trim()) pushFieldError('praktikos_vadovas_pavarde', 'Vadovo pavardė yra privaloma');
+  if (!vadovas_el_pastas || !String(vadovas_el_pastas).trim()) pushFieldError('praktikos_vadovas_el_pastas', 'Vadovo el. paštas yra privalomas');
+  if (!vadovas_telefonas || !String(vadovas_telefonas).trim()) pushFieldError('praktikos_vadovas_tel', 'Vadovo telefono numeris yra privalomas');
 
-    // Email validacija
+  if (vadovas_vardas && String(vadovas_vardas).trim().length > 50) pushFieldError('praktikos_vadovas_vardas', 'Vardas negali viršyti 50 simbolių');
+  if (vadovas_pavarde && String(vadovas_pavarde).trim().length > 50) pushFieldError('praktikos_vadovas_pavarde', 'Pavardė negali viršyti 50 simbolių');
+  if (vadovas_el_pastas && String(vadovas_el_pastas).trim().length > 50) pushFieldError('praktikos_vadovas_el_pastas', 'El. paštas negali viršyti 50 simbolių');
+
+    // email
     const emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-    if (!emailRe.test(vadovas_el_pastas)) return res.status(400).json({ error: 'Invalid vadovas email' });
+  if (vadovas_el_pastas && !emailRe.test(String(vadovas_el_pastas).trim())) pushFieldError('praktikos_vadovas_el_pastas', 'Neteisingas vadovo el. pašto adresas');
+
+    // phone strict format
+    const phoneStrictRe = /^\+370\d{8}$/;
+  if (vadovas_telefonas && !phoneStrictRe.test(String(vadovas_telefonas).trim())) pushFieldError('praktikos_vadovas_tel', 'Telefono numeris turi prasidėti +370 ir būti 12 simbolių, pvz. +37069696996');
+
+    // tipas must be one of allowed
+    const tipasNormalized = String(tipas || '').trim();
+    if (tipas && !INTERN_TYPES.includes(tipasNormalized)) pushFieldError('tipas', 'Neteisingas praktikos tipas');
+
+    // expires_at validation
+    if (expires_at) {
+      const dt = new Date(expires_at);
+      if (isNaN(dt.getTime())) pushFieldError('expires_at', 'Invalid expires_at date');
+      else {
+        const now = new Date();
+        if (dt <= now) pushFieldError('expires_at', 'Pasirinkite galiojančią ateities datą pasibaigimui');
+        if (dt.getFullYear() > 2100) pushFieldError('expires_at', 'Pasirinkite datą ne vėlesnę nei 2100-12-31');
+      }
+    }
+
+    // file must be present (multer already checks size/type)
+    if (!req.file) pushFieldError('vadovas_CV', 'Pridėkite vadovo CV (PDF/DOC/DOCX)');
+
+    // validate city against known list if available
+    try {
+      // try to load frontend city list to ensure canonical values
+      const cityList = require('../..//frontend/src/data/cityList');
+      const cities = cityList && cityList.CITY_LIST ? cityList.CITY_LIST : cityList;
+      if (miestas && Array.isArray(cities) && cities.length > 0 && !cities.includes(miestas)) {
+        pushFieldError('miestas', 'Neteisingas miestas');
+      }
+    } catch (e) {
+      // ignore if cannot load; not critical
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      return res.status(400).json({ error: 'Patikrinkite formos laukus', fieldErrors });
+    }
 
    
     let vadovas_cv_path = null;
@@ -230,7 +341,9 @@ router.post('/api/praktikos', isAuth, upload.single('vadovas_CV'), async (req, r
     res.status(201).json(created.rows[0]);
   } catch (err) {
     console.error('Error creating internship:', err);
-    res.status(500).json({ error: 'Server error' });
+    // Return the error message in dev to help debugging (safe in local/dev)
+    const msg = err && err.message ? err.message : 'Server error';
+    res.status(500).json({ error: msg });
   }
 });
 
@@ -238,26 +351,55 @@ router.post('/api/praktikos', isAuth, upload.single('vadovas_CV'), async (req, r
 router.post('/api/praktikos/:id/apply', isAuth, async (req, res) => {
   try {
     const userId = req.user.id;
-    // check role
+    // tkrina role
     const userRes = await pool.query('SELECT role FROM vartotojas WHERE vartotojo_id = $1', [userId]);
     const role = userRes.rows[0]?.role;
-    if (role !== 'studentas') return res.status(403).json({ error: 'Only students can apply to internships' });
+    if (role !== 'studentas') return res.status(403).json({ error: 'Tik studentai gali aplikuoti i praktika' });
 
     const praktikosId = parseInt(req.params.id, 10);
     if (Number.isNaN(praktikosId)) return res.status(400).json({ error: 'Invalid internship id' });
 
-    // verify internship exists
+    // tikrina ar praktikos skelbimas egzistuoja
     const pRes = await pool.query('SELECT praktikos_id FROM praktikos_skelbimas WHERE praktikos_id = $1', [praktikosId]);
     if (pRes.rows.length === 0) return res.status(404).json({ error: 'Internship not found' });
 
-  // ensure student profile exists
-  const studRes = await pool.query('SELECT studento_id FROM stud_profilis WHERE studento_id = $1', [userId]);
-  if (studRes.rows.length === 0) return res.status(400).json({ error: 'Student profile not found. Please complete your student profile before applying.' });
+    // uzkrauna studento profilio info
+    const studRes = await pool.query(
+      `SELECT studento_id, vardas, pavarde, universitetas, igudziai, CV_failo_kelias as cv_failo_kelias
+       FROM stud_profilis WHERE studento_id = $1`,
+      [userId]
+    );
+    if (studRes.rows.length === 0) return res.status(400).json({ error: 'Student profile not found. Please complete your student profile before applying.' });
 
-  // prevent duplicate application
+    const studProfile = studRes.rows[0];
+
+    // assemble a final profile object combining session info and stud_profilis for clearer logs
+    const finalProfile = Object.assign(
+      {
+        id: userId,
+        isNewUser: false,
+      },
+      req.user || {},
+      {
+        role: role,
+        studento_id: studProfile.studento_id,
+        vardas: studProfile.vardas,
+        pavarde: studProfile.pavarde,
+        universitetas: studProfile.universitetas,
+        igudziai: studProfile.igudziai,
+        cv_failo_kelias: studProfile.cv_failo_kelias || null,
+        cv_original_filename: studProfile.cv_original_filename || null
+      }
+    );
+
+    // Log duomenis konsolei
+    console.log('Final profile data being sent:', finalProfile);
+    console.log('Student profile data found:', studProfile);
+
+    // neleidzia pakartotinio aplikavimo
     const dup = await pool.query('SELECT paraiskos_id FROM praktikos_paraiska WHERE studento_id = $1 AND praktikos_id = $2', [userId, praktikosId]);
     if (dup.rows.length > 0) {
-      return res.status(409).json({ error: 'You have already applied to this internship' });
+      return res.status(409).json({ error: 'Jus negalite dar karta aplikuoti i ta pacia praktika' });
     }
 
     // insert application
@@ -269,6 +411,16 @@ router.post('/api/praktikos/:id/apply', isAuth, async (req, res) => {
     // return updated application count
     const cntRes = await pool.query('SELECT COUNT(*)::int AS count FROM praktikos_paraiska WHERE praktikos_id = $1', [praktikosId]);
     const application_count = cntRes.rows[0].count;
+
+    // Log aplikacijos event
+    console.log(`Student ${userId} applied to internship ${praktikosId} -> paraiskos_id=${ins.rows[0].paraiskos_id}; total_applications=${application_count}`);
+    // sukurta aplikacija
+    console.log('Application created:', {
+      paraiskos_id: ins.rows[0].paraiskos_id,
+      praktikos_id: praktikosId,
+      studento_id: userId,
+      application_count
+    });
 
     res.status(201).json({ paraiskos_id: ins.rows[0].paraiskos_id, application_count });
   } catch (err) {

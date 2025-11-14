@@ -4,11 +4,13 @@ const API_URL = import.meta.env.VITE_SERVER_URL;
 
 // Get visus praktikų skelbimus su filtrais
 export async function getAllInternships(filters = {}) {
-  try {
+  try { 
     const params = new URLSearchParams();
     if (filters.query) params.append('q', filters.query);
     if (filters.tipas) params.append('tipas', filters.tipas);
     if (filters.miestas) params.append('miestas', filters.miestas);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.per_page) params.append('per_page', String(filters.per_page));
 
     const url = `${API_URL}/api/praktikos${params.toString() ? '?' + params.toString() : ''}`;
     const response = await fetch(url, {
@@ -20,7 +22,11 @@ export async function getAllInternships(filters = {}) {
       throw new Error(`Failed to fetch internships: ${response.status}`);
     }
 
-    return await response.json();
+    // API dabar grazina puslapiuota objekta { items, total, page, per_page, total_pages }
+    const payload = await response.json();
+    
+    if (Array.isArray(payload)) return payload;
+    return payload;
   } catch (error) {
     console.error('Error fetching internships:', error);
     throw error;
