@@ -117,11 +117,73 @@ export async function createInternship(internshipData) {
   }
 }
 
-// Bundle all functions into an object for named imports
+// Get paraiskas konkrecios praktikos (TIK imonems)
+export async function getInternshipApplications(internshipId) {
+  try {
+    const response = await fetch(`${API_URL}/api/praktikos/${internshipId}/applications`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Nepavyko gauti aplikaciju: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    throw error;
+  }
+}
+
+// Atnaujinamas aplikacijos statusas (TIK imonems)
+export async function updateApplicationStatus(applicationId, status) {
+  try {
+    const response = await fetch(`${API_URL}/api/applications/${applicationId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Nepavyko atnaujinti aplikacijos statuso: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error naujinant aplikacijos statusa:', error);
+    throw error;
+  }
+}
+
+// Get sudentu profiliu informacija (TIK imonems)
+export async function getStudentProfile(studentId) {
+  try {
+    const response = await fetch(`${API_URL}/api/students/${studentId}/profile`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Nepavyko gauti studento profilio: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error gaunant studento profili:', error);
+    throw error;
+  }
+}
+
+// Sujungti visas funkcijas į objektą, skirtą vardiniams importams 
 export const internshipService = {
   getAllInternships,
   getInternshipById,
   applyForInternship,
   getMyApplications,
-  createInternship
+  createInternship,
+  getInternshipApplications,
+  updateApplicationStatus,
+  getStudentProfile
 };

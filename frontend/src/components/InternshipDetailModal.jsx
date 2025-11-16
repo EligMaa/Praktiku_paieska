@@ -108,6 +108,9 @@ export default function InternshipDetailModal({ open, internshipId, onClose }) {
             {internship.expires_at && (
               <div className="internship-detail-expiry"><strong>Galioja iki:</strong> {new Date(internship.expires_at).toLocaleString()}</div>
             )}
+
+            
+
           </div>
         )}
       </div>
