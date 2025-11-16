@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext";
 import SearchBar from "./SearchBar";
 import "./Header.css";
+import logo from "../assets/logo.jpg";
 
 export default function Header({ onSearch }) {
   const navigate = useNavigate();
@@ -33,17 +34,29 @@ export default function Header({ onSearch }) {
     headerTop: {
       width: '100%',
       display: 'flex',
-      justifyContent: 'center',
-      flexDirection: 'column',
+      justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: '2rem',
       position: 'relative'
+    },
+    logoContainer: {
+      position: 'absolute',
+      left: '-70px',
+      top: '0',
+      cursor: 'pointer',
+      transition: 'opacity 0.2s'
+    },
+    logo: {
+      height: '60px',
+      width: 'auto',
+      objectFit: 'contain'
     },
     headerTitle: {
       fontSize: '4rem',
       fontWeight: 'bold',
       marginBottom: '1.5rem',
-      textAlign: 'center'
+      textAlign: 'center',
+      flex: 1
     },
     headerButtons: {
       display: 'flex',
@@ -86,6 +99,16 @@ export default function Header({ onSearch }) {
     <header style={styles.header}>
       <div style={styles.headerContainer}>
         <div style={styles.headerTop}>
+          {/* Logo */}
+          <div 
+            style={styles.logoContainer} 
+            onClick={() => navigate("/")}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
+            <img src={logo} alt="InternLink Logo" style={styles.logo} />
+          </div>
+          
           <h1 style={styles.headerTitle}>InternLink</h1>
           <div style={styles.headerButtons}>
             {user.loggedIn ? (

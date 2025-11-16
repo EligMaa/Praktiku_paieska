@@ -5,9 +5,11 @@ export const UserContext = createContext();
 
 export function UserProvider({ children }) {
     const [user, setUser] = useState({ loggedIn: false });
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
+        setLoading(true);
         fetch(`${import.meta.env.VITE_SERVER_URL}/account`, { credentials: "include" })
             .then(r => {
                 if (r.status === 401) throw new Error('Unauthorized');
@@ -21,7 +23,8 @@ export function UserProvider({ children }) {
                     setUser({ loggedIn: false });
                 }
             })
-            .catch(() => setUser({ loggedIn: false }));
+            .catch(() => setUser({ loggedIn: false }))
+            .finally(() => setLoading(false));
     }, []);
 
     useEffect(() => {
@@ -54,7 +57,7 @@ export function UserProvider({ children }) {
         // Guests are never redirected
     }, [user.loggedIn]);
 
-    return <UserContext.Provider value={{ user, setUser }}>{children}</UserContext.Provider>;
+    return <UserContext.Provider value={{ user, setUser, loading }}>{children}</UserContext.Provider>;
 }
 
 export function useUser() {
