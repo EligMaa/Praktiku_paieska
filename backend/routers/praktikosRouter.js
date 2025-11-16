@@ -429,5 +429,85 @@ router.post('/api/praktikos/:id/apply', isAuth, async (req, res) => {
   }
 });
 
+// GET /api/praktikos/:id/application-status - get studento aplikacijos statusa konkrečiai praktikai
+router.get('/api/praktikos/:id/application-status', isAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const praktikosId = parseInt(req.params.id, 10);
+    
+    // tikrina ar useris studentas
+    const userRes = await pool.query('SELECT role FROM vartotojas WHERE vartotojo_id = $1', [userId]);
+    const role = userRes.rows[0]?.role;
+    
+    if (role !== 'studentas') {
+      return res.status(403).json({ error: 'Only students can check application status' });
+    }
+    
+    // ieško aplikacijos
+    const result = await pool.query(
+      'SELECT paraiskos_id, priemimo_statusas FROM praktikos_paraiska WHERE studento_id = $1 AND praktikos_id = $2',
+      [userId, praktikosId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+    
+    // grąžina aplikacijos statusą ( arba default 'laukia' )
+    res.json({ 
+      paraiskos_id: result.rows[0].paraiskos_id,
+      status: result.rows[0].priemimo_statusas || 'laukia' 
+    });
+  } catch (err) {
+    console.error('Error fetching application status:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /api/my-applications - get studento aplikacijas i praktika
+router.get('/api/my-applications', isAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // tikrina ar useris studentas
+    const userRes = await pool.query('SELECT role FROM vartotojas WHERE vartotojo_id = $1', [userId]);
+    const role = userRes.rows[0]?.role;
+    
+    if (role !== 'studentas') {
+      return res.status(403).json({ error: 'Only students can view applications' });
+    }
+    
+    // gauna studento aplikacijas su praktuku informacija
+    const result = await pool.query(
+      `SELECT 
+        pp.paraiskos_id as application_id,
+        pp.praktikos_id,
+        pp.pateikimo_laikas,
+        pp.priemimo_statusas as status,
+        p.pavadinimas as job_title,
+        p.tipas as type,
+        p.lokacija as location,
+        p.miestas,
+        ip.pavadinimas as company_name
+       FROM praktikos_paraiska pp
+       LEFT JOIN praktikos_skelbimas p ON pp.praktikos_id = p.praktikos_id
+       LEFT JOIN imones_profilis ip ON p.imones_id = ip.imones_id
+       WHERE pp.studento_id = $1
+       ORDER BY pp.pateikimo_laikas DESC`,
+      [userId]
+    );
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching student applications:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
+
+
+
 module.exports = router;
 

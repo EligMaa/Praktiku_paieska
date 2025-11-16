@@ -75,7 +75,7 @@ export async function applyForInternship(internshipId, application = {}) {
   }
 }
 
-// Get user's internship applications
+// Get studento aplikacijas i praktika
 export async function getMyApplications() {
   try {
     const response = await fetch(`${API_URL}/api/my-applications`, {

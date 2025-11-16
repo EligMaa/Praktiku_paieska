@@ -57,13 +57,13 @@ export default function SearchBar({ onSearch }) {
         className="search-input"
       />
       {error && <div className="search-error" role="alert">{error}</div>}
-      <select value={tipas} onChange={e => setTipas(e.target.value)} className="search-select">
+      <select value={tipas} onChange={e => setTipas(e.target.value)} className="search-select" aria-label="Filtruoti pagal praktikos sritį">
         <option value="">Visos sritys</option>
         {INTERNSHIP_TYPES.map(t => (
           <option key={t} value={t}>{t}</option>
         ))}
       </select>
-      <select value={miestas} onChange={e => setMiestas(e.target.value)} className="search-select">
+      <select value={miestas} onChange={e => setMiestas(e.target.value)} className="search-select" aria-label="Filtruoti pagal miestą">
         <option value="">Visi miestai</option>
         {CITY_LIST.map(c => (
           <option key={c} value={c}>{c}</option>

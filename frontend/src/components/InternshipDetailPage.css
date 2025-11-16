@@ -80,9 +80,43 @@
   margin: 6px 0;
 }
 
+/* Success toast message */
+.success-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4caf50;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  font-size: 16px;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 /* responsive */
 @media (max-width: 900px) {
   .internship-detail-grid { grid-template-columns: 1fr; }
   .detail-right { flex-direction: row; overflow-x: auto; }
   .card { min-width: 280px; }
+  
+  .success-toast {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    text-align: center;
+  }
 }

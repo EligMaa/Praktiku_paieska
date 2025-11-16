@@ -12,6 +12,7 @@ export default function InternshipDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [applying, setApplying] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -41,8 +42,13 @@ export default function InternshipDetailPage() {
     try {
       setApplying(true);
       await applyForInternship(id, {});
-      // navigate to applications or show a small confirmation
-      navigate('/my-applications');
+      // rodo pranesima, kai aplikacija PRIIMTA
+      setSuccessMessage('Aplikacija priimta');
+      // rodo tik 3 sekundes ir perveda i mano aplikaciju puslapi
+      setTimeout(() => {
+        setSuccessMessage(null);
+        navigate('/my-applications');
+      }, 3000);
     } catch (err) {
       console.error(err);
       alert('Nepavyko aplikuoti');
@@ -57,6 +63,11 @@ export default function InternshipDetailPage() {
 
   return (
     <div className="internship-detail-grid">
+      {successMessage && (
+        <div className="success-toast">
+          {successMessage}
+        </div>
+      )}
       <div className="detail-left">
         <div>
           <h2>{internship.pavadinimas}</h2>
@@ -77,7 +88,7 @@ export default function InternshipDetailPage() {
           <div className="apply-row">
             {user?.role === 'studentas' ? (
               <button onClick={handleApply} disabled={applying}>{applying ? 'Aplikuojama...' : 'Aplikuoti'}
-              if(applying)
+              
               </button>
             ) : null}
           </div>
