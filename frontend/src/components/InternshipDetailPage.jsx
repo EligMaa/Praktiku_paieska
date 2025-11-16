@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getInternshipById, applyForInternship } from '../services/internshipService';
 import { useUser } from './UserContext';
+import Logo from './Logo';
 import './InternshipDetailPage.css';
 
 export default function InternshipDetailPage() {
@@ -62,12 +63,14 @@ export default function InternshipDetailPage() {
   if (!internship) return <div>Nerasta</div>;
 
   return (
-    <div className="internship-detail-grid">
-      {successMessage && (
-        <div className="success-toast">
-          {successMessage}
-        </div>
-      )}
+    <>
+      <Logo />
+      <div className="internship-detail-grid">
+        {successMessage && (
+          <div className="success-toast">
+            {successMessage}
+          </div>
+        )}
       <div className="detail-left">
         <div>
           <h2>{internship.pavadinimas}</h2>
@@ -129,6 +132,7 @@ export default function InternshipDetailPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

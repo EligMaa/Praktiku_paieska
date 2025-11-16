@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from './UserContext';
+import Logo from './Logo';
 import './EditProfile.css';
 import { MAX_NAME, MAX_SKILLS, MAX_DESC, enforceLimits, validateFile, MAX_FILE_SIZE } from '../hooks/useFieldLimits';
 import { UNIVERSITIES } from '../data/universities';
@@ -180,10 +181,12 @@ export default function EditProfile() {
   console.log('Current form state:', form);
   
   return (
-    <form onSubmit={handleSubmit} className="edit-profile-form">
-      <h2 style={{ color: 'white' }}> Redaguoti profilį</h2>
-      
-      {errors.form && <div className="form-error">{errors.form}</div>}
+    <>
+      <Logo />
+      <form onSubmit={handleSubmit} className="edit-profile-form">
+        <h2 style={{ color: 'white' }}> Redaguoti profilį</h2>
+        
+        {errors.form && <div className="form-error">{errors.form}</div>}
       
 
       
@@ -366,6 +369,7 @@ export default function EditProfile() {
           Atšaukti
         </button>
       </div>
-    </form>
+      </form>
+    </>
   );
 }

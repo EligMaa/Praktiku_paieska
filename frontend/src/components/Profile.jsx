@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useUser } from './UserContext.jsx';
 import { useNavigate } from 'react-router-dom';
 
+import Logo from './Logo';
 import ProfileHeader from './profile/ProfileHeader';
 import BasicInfo from './profile/BasicInfo';
 import StudentInfo from './profile/StudentInfo';
@@ -11,6 +12,7 @@ import EditButton from './profile/EditButton';
 import CreateInternshipNew from './CreateInternshipNew.jsx';
 import InternshipList from './InternshipList';
 import InternshipDetailModal from './InternshipDetailModal';
+import InternshipApplications from './company/InternshipApplications';
 import { getMyApplications } from '../services/internshipService';
 
 import './profile/Profile.css';
@@ -27,6 +29,8 @@ export default function Profile() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedInternshipId, setSelectedInternshipId] = useState(null);
+  const [showApplications, setShowApplications] = useState(false);
+  const [selectedInternshipForApps, setSelectedInternshipForApps] = useState(null);
 
   // fetch company internships for companies
   useEffect(() => {
@@ -142,6 +146,7 @@ export default function Profile() {
   
   return (
     <div className="profile-container">
+      <Logo />
       <ProfileHeader user={user} />
       
       <div className="profile-main">
@@ -182,9 +187,21 @@ export default function Profile() {
                     <div className="sidebar-empty">Jūs neturite sukurtų praktikų.</div>
                   ) : (
                     companyInternships.map(i => (
-                      <div key={i.praktikos_id} className="sidebar-item" onClick={() => { setSelectedInternshipId(i.praktikos_id); setDetailOpen(true); }}>
-                        <div className="sidebar-item-title">{i.pavadinimas}</div>
-                        <div className="sidebar-item-desc">{i.aprasymas.substring(0, 120)}</div>
+                      <div key={i.praktikos_id} className="sidebar-item">
+                        <div onClick={() => { setSelectedInternshipId(i.praktikos_id); setDetailOpen(true); }}>
+                          <div className="sidebar-item-title">{i.pavadinimas}</div>
+                          <div className="sidebar-item-desc">{i.aprasymas.substring(0, 120)}</div>
+                        </div>
+                        <button
+                          className="edit-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedInternshipForApps(i);
+                            setShowApplications(true);
+                          }}
+                        >
+                          Peržiūrėti aplikacijas
+                        </button>
                       </div>
                     ))
                   )}
@@ -216,6 +233,17 @@ export default function Profile() {
           )}
         </div>
         <InternshipDetailModal open={detailOpen} internshipId={selectedInternshipId} onClose={() => { setDetailOpen(false); setSelectedInternshipId(null); }} />
+        
+        {showApplications && selectedInternshipForApps && (
+          <InternshipApplications
+            internshipId={selectedInternshipForApps.praktikos_id}
+            internshipTitle={selectedInternshipForApps.pavadinimas}
+            onClose={() => {
+              setShowApplications(false);
+              setSelectedInternshipForApps(null);
+            }}
+          />
+        )}
       </div>
     </div>
   );

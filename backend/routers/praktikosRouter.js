@@ -61,7 +61,7 @@ router.get('/api/praktikos', async (req, res) => {
     if (per_page > MAX_PER_PAGE) per_page = MAX_PER_PAGE;
 
     const selectCols = `p.*, ip.pavadinimas AS imones_pavadinimas, ip.logotipo_failo_kelias AS imones_logotipas,
-                 v.vardas AS vadovas_vardas, v.pavarde AS vadovas_pavarde, v.el_pastas AS vadovas_email, v.telefonas AS vadovas_telefonas, v.CV_failo_kelias AS vadovas_cv_failo,
+                 v.vardas AS vadovas_vardas, v.pavarde AS vadovas_pavarde, v.el_pastas AS vadovas_email, v.telefonas AS vadovas_telefonas, v.cv_failo_kelias AS vadovas_cv_failo,
                  (SELECT COUNT(*) FROM praktikos_paraiska pp WHERE pp.praktikos_id = p.praktikos_id) AS application_count`;
 
     const fromSql = `FROM praktikos_skelbimas p
@@ -157,7 +157,7 @@ router.get('/api/praktikos/:id', async (req, res) => {
     const id = req.params.id;
     const result = await pool.query(
       `SELECT p.*, ip.pavadinimas AS imones_pavadinimas, ip.logotipo_failo_kelias AS imones_logotipas,
-         v.vardas AS vadovas_vardas, v.pavarde AS vadovas_pavarde, v.el_pastas AS vadovas_email, v.telefonas AS vadovas_telefonas, v.CV_failo_kelias AS vadovas_cv_failo,
+         v.vardas AS vadovas_vardas, v.pavarde AS vadovas_pavarde, v.el_pastas AS vadovas_email, v.telefonas AS vadovas_telefonas, v.cv_failo_kelias AS vadovas_cv_failo,
          (SELECT COUNT(*) FROM praktikos_paraiska pp WHERE pp.praktikos_id = p.praktikos_id) AS application_count
        FROM praktikos_skelbimas p
        LEFT JOIN imones_profilis ip ON p.imones_id = ip.imones_id
@@ -298,11 +298,11 @@ router.post('/api/praktikos', isAuth, upload.single('vadovas_CV'), async (req, r
       vadovasId = existing.rows[0].vadovo_id;
       // Optionally update CV path if new file uploaded
       if (vadovas_cv_path) {
-        await pool.query('UPDATE praktikos_vadovas SET CV_failo_kelias = $1, telefonas = $2 WHERE vadovo_id = $3', [vadovas_cv_path, phoneTrimmed || null, vadovasId]);
+        await pool.query('UPDATE praktikos_vadovas SET cv_failo_kelias = $1, telefonas = $2 WHERE vadovo_id = $3', [vadovas_cv_path, phoneTrimmed || null, vadovasId]);
       }
     } else {
       const ins = await pool.query(
-        `INSERT INTO praktikos_vadovas (vardas, pavarde, CV_failo_kelias, el_pastas, telefonas)
+        `INSERT INTO praktikos_vadovas (vardas, pavarde, cv_failo_kelias, el_pastas, telefonas)
          VALUES ($1, $2, $3, $4, $5) RETURNING vadovo_id`,
         [vadovas_vardas, vadovas_pavarde, vadovas_cv_path, vadovas_el_pastas, phoneTrimmed || null]
       );
@@ -365,7 +365,7 @@ router.post('/api/praktikos/:id/apply', isAuth, async (req, res) => {
 
     // uzkrauna studento profilio info
     const studRes = await pool.query(
-      `SELECT studento_id, vardas, pavarde, universitetas, igudziai, CV_failo_kelias as cv_failo_kelias
+      `SELECT studento_id, vardas, pavarde, universitetas, igudziai, cv_failo_kelias
        FROM stud_profilis WHERE studento_id = $1`,
       [userId]
     );
@@ -505,9 +505,144 @@ router.get('/api/my-applications', isAuth, async (req, res) => {
 });
 
 
+// GET /api/praktikos/:id/applications - gauti visas aplikacijas konkrečiai praktikai (tik įmonėms)
+router.get('/api/praktikos/:id/applications', isAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const praktikosId = parseInt(req.params.id, 10);
+    
+    // Tikrina ar user yra įmonė
+    const userRes = await pool.query('SELECT role FROM vartotojas WHERE vartotojo_id = $1', [userId]);
+    const role = userRes.rows[0]?.role;
+    
+    if (role !== 'imone') {
+      return res.status(403).json({ error: 'TIK imones gali matyti aplikacijas' });
+    }
+    
+    // Tikrina ar ši praktika priklauso šiai įmonei
+    const praktikosRes = await pool.query(
+      'SELECT imones_id FROM praktikos_skelbimas WHERE praktikos_id = $1',
+      [praktikosId]
+    );
+    
+    if (praktikosRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Praktiku skelbimu nera' });
+    }
+    
+    if (praktikosRes.rows[0].imones_id !== userId) {
+      return res.status(403).json({ error: 'Jus galite matyti TIK savo imones praktikas' });
+    }
+    
+    // Gauna visas aplikacijas su studento informacija
+    const applicationsRes = await pool.query(
+      `SELECT 
+        pp.paraiskos_id,
+        pp.studento_id,
+        pp.pateikimo_laikas,
+        pp.priemimo_statusas,
+        sp.vardas,
+        sp.pavarde,
+        sp.universitetas,
+        sp.igudziai,
+        sp.cv_failo_kelias
+       FROM praktikos_paraiska pp
+       LEFT JOIN stud_profilis sp ON pp.studento_id = sp.studento_id
+       WHERE pp.praktikos_id = $1
+       ORDER BY pp.pateikimo_laikas DESC`,
+      [praktikosId]
+    );
+    
+    res.json(applicationsRes.rows);
+  } catch (err) {
+    console.error('Error fetching applications:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
+// PATCH /api/applications/:id/status - atnaujinti aplikacijos statusą (tik įmonėms)
+router.patch('/api/applications/:id/status', isAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const paraiskosId = parseInt(req.params.id, 10);
+    const { status } = req.body;
+    
+    // Validacija
+    if (!status || !['laukia', 'patvirtinta', 'atmesta'].includes(status)) {
+      return res.status(400).json({ error: 'Netinkamas aplikacijos statusas. Galimi statusai: laukia, patvirtinta, ar atmesta' });
+    }
+    
+    // Tikrina ar user yra įmonė
+    const userRes = await pool.query('SELECT role FROM vartotojas WHERE vartotojo_id = $1', [userId]);
+    const role = userRes.rows[0]?.role;
+    
+    if (role !== 'imone') {
+      return res.status(403).json({ error: 'TIK imones gali atnaujinti aplikacijos statusa' });
+    }
+    
+    // Tikrina ar ši aplikacija priklauso įmonės praktikai
+    const applicationRes = await pool.query(
+      `SELECT pp.paraiskos_id, ps.imones_id 
+       FROM praktikos_paraiska pp
+       LEFT JOIN praktikos_skelbimas ps ON pp.praktikos_id = ps.praktikos_id
+       WHERE pp.paraiskos_id = $1`,
+      [paraiskosId]
+    );
+    
+    if (applicationRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Paraiska nerasta' });
+    }
+    
+    if (applicationRes.rows[0].imones_id !== userId) {
+      return res.status(403).json({ error: 'Galite atnaujinti TIK savo imones aplikacijos statusa' });
+    }
+    
+    // Atnaujina statusą
+    const updateRes = await pool.query(
+      'UPDATE praktikos_paraiska SET priemimo_statusas = $1 WHERE paraiskos_id = $2 RETURNING *',
+      [status, paraiskosId]
+    );
+    
+    res.json({ 
+      message: 'Statusas sekmingai atnaujintas',
+      application: updateRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error naujinant aplikacijos statusa:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
-
+// GET /api/students/:id/profile - gauti studento profilio informaciją
+router.get('/api/students/:id/profile', isAuth, async (req, res) => {
+  try {
+    const studentoId = parseInt(req.params.id, 10);
+    
+    // Gauna studento profilio informaciją
+    const studentRes = await pool.query(
+      `SELECT 
+        sp.studento_id,
+        sp.vardas,
+        sp.pavarde,
+        sp.universitetas,
+        sp.igudziai,
+        sp.cv_failo_kelias,
+        v.el_pastas
+       FROM stud_profilis sp
+       LEFT JOIN vartotojas v ON sp.studento_id = v.vartotojo_id
+       WHERE sp.studento_id = $1`,
+      [studentoId]
+    );
+    
+    if (studentRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Student profile not found' });
+    }
+    
+    res.json(studentRes.rows[0]);
+  } catch (err) {
+    console.error('Error fetching student profile:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 module.exports = router;
 

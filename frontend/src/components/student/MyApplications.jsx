@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../UserContext';
 import { getMyApplications } from '../../services/internshipService';
+import Logo from '../Logo';
 import './MyApplications.css';
 
 export default function MyApplications() {
@@ -61,6 +62,7 @@ export default function MyApplications() {
   
   return (
     <div className="my-applications-container">
+      <Logo />
       <h2>Mano praktiku aplikacijos</h2>
       
       {error && <div className="error-message">{error}</div>}

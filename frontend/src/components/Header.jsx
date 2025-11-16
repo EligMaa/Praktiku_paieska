@@ -40,16 +40,21 @@ export default function Header({ onSearch }) {
       position: 'relative'
     },
     logoContainer: {
-      position: 'absolute',
-      left: '-70px',
-      top: '0',
+      position: 'fixed',
+      top: '1rem',
+      left: '1rem',
+      zIndex: 1000,
       cursor: 'pointer',
-      transition: 'opacity 0.2s'
+      transition: 'opacity 0.2s',
+      padding: '0.5rem',
+      background: 'rgba(0, 0, 0, 0.3)',
+      borderRadius: '8px'
     },
     logo: {
-      height: '60px',
+      height: '50px',
       width: 'auto',
-      objectFit: 'contain'
+      objectFit: 'contain',
+      display: 'block'
     },
     headerTitle: {
       fontSize: '4rem',

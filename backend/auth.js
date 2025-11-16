@@ -30,8 +30,8 @@ passport.use(
                     if (currentVartotojaQuery.rows.length === 0) {
                         const role = 'unspecified'; // laikina role kuria vliau kuriant profili privales pasirinkt
                         const insertRes = await pool.query(
-                            "INSERT INTO vartotojas (google_id, role) VALUES ($1, $2)", 
-                            [account.sub, role]
+                            "INSERT INTO vartotojas (google_id, el_pastas, role) VALUES ($1, $2, $3)", 
+                            [account.sub, account.el_pastas, role]
                         );
                         console.log('Insert result:', insertRes);
                         const idQuery = await pool.query(
