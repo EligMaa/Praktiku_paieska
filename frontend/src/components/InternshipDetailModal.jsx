@@ -81,8 +81,16 @@ export default function InternshipDetailModal({ open, internshipId, onClose }) {
             </div>
             
             
-            {/* Application status for students */}
-            {user?.role === 'studentas' && applicationStatus && (
+            {/* Expiry warning */}
+            {internship.expires_at && new Date(internship.expires_at) < new Date() && (
+              <div className="internship-expired-banner">
+                <strong>⚠️ Šis skelbimas nebegalioja</strong>
+                <p>Skelbimo galiojimo laikas pasibaigė {new Date(internship.expires_at).toLocaleDateString()}</p>
+              </div>
+            )}
+
+            {/* Application status for students - only show if internship is still active */}
+            {user?.role === 'studentas' && applicationStatus && !(internship.expires_at && new Date(internship.expires_at) < new Date()) && (
               <div className={`application-status-banner status-${applicationStatus}`}>
                 {applicationStatus === 'patvirtinta' && (
                   <div>
@@ -105,8 +113,8 @@ export default function InternshipDetailModal({ open, internshipId, onClose }) {
                 
               </div>
             )}
-            {internship.expires_at && (
-              <div className="internship-detail-expiry"><strong>Galioja iki:</strong> {new Date(internship.expires_at).toLocaleString()}</div>
+            {internship.expires_at && new Date(internship.expires_at) >= new Date() && (
+              <div className="internship-detail-expiry"><strong>Galioja iki:</strong> {new Date(internship.expires_at).toLocaleDateString()}</div>
             )}
 
             

@@ -72,6 +72,18 @@ router.get('/api/praktikos', async (req, res) => {
     const params = [];
     let idx = 1;
 
+    console.log('Filter params - imones_id:', imones_id, 'tipas:', tipas, 'miestas:', miestas);
+
+    // Jei filtruojama pagal imones_id, rodo VISUS skelbimus (įskaitant pasibaigusius)
+    // Kitais atvejais - tik galiojančius
+    if (!imones_id) {
+      console.log('Adding expires_at filter (public search)');
+      whereClauses.push(`(p.expires_at IS NULL OR p.expires_at > $${idx++})`);
+      params.push(new Date());
+    } else {
+      console.log('Skipping expires_at filter (company profile - showing all)');
+    }
+
     if (imones_id) {
       whereClauses.push(`p.imones_id = $${idx++}`);
       params.push(imones_id);
@@ -130,8 +142,11 @@ router.get('/api/praktikos', async (req, res) => {
 
     // isgauti bendrą įrašų skaiciu
     const countSql = `SELECT COUNT(*)::int as total ${fromSql} ${whereSql}`;
+    console.log('SQL Query:', countSql);
+    console.log('Params:', params);
     const countRes = await pool.query(countSql, params);
     const total = countRes.rows[0] ? parseInt(countRes.rows[0].total, 10) : 0;
+    console.log('Total internships after filter:', total);
 
     // PUSLAPIAVIMAS
     const offset = (page - 1) * per_page;
@@ -140,6 +155,8 @@ router.get('/api/praktikos', async (req, res) => {
 
     const finalSql = `SELECT ${selectCols} ${fromSql} ${whereSql} ORDER BY p.praktikos_id DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
     const result = await pool.query(finalSql, params);
+    console.log('Returned internships:', result.rows.length);
+    console.log('Internship IDs:', result.rows.map(r => r.praktikos_id));
     
     // PUSLAPIAVIMUI
     const total_pages = Math.ceil(total / per_page);
@@ -359,9 +376,15 @@ router.post('/api/praktikos/:id/apply', isAuth, async (req, res) => {
     const praktikosId = parseInt(req.params.id, 10);
     if (Number.isNaN(praktikosId)) return res.status(400).json({ error: 'Invalid internship id' });
 
-    // tikrina ar praktikos skelbimas egzistuoja
-    const pRes = await pool.query('SELECT praktikos_id FROM praktikos_skelbimas WHERE praktikos_id = $1', [praktikosId]);
+    // tikrina ar praktikos skelbimas egzistuoja ir ar galioja
+    const pRes = await pool.query('SELECT praktikos_id, expires_at FROM praktikos_skelbimas WHERE praktikos_id = $1', [praktikosId]);
     if (pRes.rows.length === 0) return res.status(404).json({ error: 'Internship not found' });
+    
+    // Tikrina ar skelbimas dar galioja
+    const internship = pRes.rows[0];
+    if (internship.expires_at && new Date(internship.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'Šis praktikos skelbimas nebegalioja' });
+    }
 
     // uzkrauna studento profilio info
     const studRes = await pool.query(
@@ -601,6 +624,43 @@ router.patch('/api/applications/:id/status', isAuth, async (req, res) => {
       'UPDATE praktikos_paraiska SET priemimo_statusas = $1 WHERE paraiskos_id = $2 RETURNING *',
       [status, paraiskosId]
     );
+    
+    // Gauna studento ir praktikos informaciją EMAIL LAISKO siuntimui
+    if (status === 'patvirtinta' || status === 'atmesta') {
+      try {
+        const { sendApplicationStatusEmail } = require('../emailService');
+        
+        const emailInfoRes = await pool.query(
+          `SELECT 
+            v.el_pastas,
+            sp.vardas,
+            sp.pavarde,
+            ps.pavadinimas as praktikos_pavadinimas,
+            ip.pavadinimas as imones_pavadinimas
+           FROM praktikos_paraiska pp
+           LEFT JOIN stud_profilis sp ON pp.studento_id = sp.studento_id
+           LEFT JOIN vartotojas v ON sp.studento_id = v.vartotojo_id
+           LEFT JOIN praktikos_skelbimas ps ON pp.praktikos_id = ps.praktikos_id
+           LEFT JOIN imones_profilis ip ON ps.imones_id = ip.imones_id
+           WHERE pp.paraiskos_id = $1`,
+          [paraiskosId]
+        );
+        
+        if (emailInfoRes.rows.length > 0) {
+          const info = emailInfoRes.rows[0];
+          await sendApplicationStatusEmail(
+            info.el_pastas,
+            `${info.vardas} ${info.pavarde}`,
+            info.praktikos_pavadinimas,
+            status,
+            info.imones_pavadinimas
+          );
+        }
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        // Neprilygstam error - statusas vis tiek atnaujintas
+      }
+    }
     
     res.json({ 
       message: 'Statusas sekmingai atnaujintas',

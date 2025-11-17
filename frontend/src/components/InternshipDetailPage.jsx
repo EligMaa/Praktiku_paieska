@@ -52,7 +52,7 @@ export default function InternshipDetailPage() {
       }, 3000);
     } catch (err) {
       console.error(err);
-      alert('Nepavyko aplikuoti');
+      alert('I praktika galima aplikuoti tik viena karta');
     } finally {
       setApplying(false);
     }
