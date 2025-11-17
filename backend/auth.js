@@ -31,7 +31,7 @@ passport.use(
                         const role = 'unspecified'; // laikina role kuria vliau kuriant profili privales pasirinkt
                         const insertRes = await pool.query(
                             "INSERT INTO vartotojas (google_id, el_pastas, role) VALUES ($1, $2, $3)", 
-                            [account.sub, account.el_pastas, role]
+                            [account.sub, account.email, role]
                         );
                         console.log('Insert result:', insertRes);
                         const idQuery = await pool.query(
