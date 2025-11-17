@@ -125,3 +125,25 @@
   border-color: #f44336;
   color: #b71c1c;
 }
+
+/* Expired internship banner */
+.internship-expired-banner {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border-left: 4px solid #9e9e9e;
+  color: #424242;
+}
+
+.internship-expired-banner strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 6px;
+  color: #757575;
+}
+
+.internship-expired-banner p {
+  margin: 0;
+  opacity: 0.8;
+}
