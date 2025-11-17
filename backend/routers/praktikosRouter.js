@@ -626,7 +626,7 @@ router.get('/api/students/:id/profile', isAuth, async (req, res) => {
         sp.universitetas,
         sp.igudziai,
         sp.cv_failo_kelias,
-        v.el_pastas
+        v.el_pastas as email
        FROM stud_profilis sp
        LEFT JOIN vartotojas v ON sp.studento_id = v.vartotojo_id
        WHERE sp.studento_id = $1`,
