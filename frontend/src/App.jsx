@@ -10,7 +10,8 @@ const url = `${import.meta.env.VITE_SERVER_URL}/auth/google`;
 
 export default function App() {
   const [jobs, setJobs] = useState([]);
-  const [search, setSearch] = useState("");
+  // searchFilters: { query: string, tipas: string }
+  const [searchFilters, setSearchFilters] = useState({ query: '', tipas: '' });
 
   // useEffect(() => {
   //   // praktiku komponentas cia bus
@@ -18,10 +19,10 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <Header />
+      <Header onSearch={setSearchFilters} />
       <div className="content-container">
         <main className="flex flex-col items-center">
-          <InternshipList />
+          <InternshipList filters={searchFilters} />
         </main>
       </div>
     </div>
