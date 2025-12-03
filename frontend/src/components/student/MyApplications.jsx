@@ -32,7 +32,7 @@ export default function MyApplications() {
     }
   };
   
-  // Helper function to get status badge class
+  // Helper funkcija statuso badge klasei gauti
   const getStatusClass = (status) => {
     switch (status) {
       case 'laukia': return 'status-laukia';
@@ -42,7 +42,7 @@ export default function MyApplications() {
     }
   };
   
-  // Helper function to format status text
+  // Helper funkcija statuso formatuoti
   const formatStatus = (status) => {
     if (!status) return 'Laukiama patvirtinimo';
     switch (status) {

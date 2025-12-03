@@ -115,10 +115,10 @@ router.get('/api/praktikos', async (req, res) => {
         const wordClauses = [];
         for (const word of words) {
           const paramIndex = idx;
-          // push the parameter for this word (used by all columns in this subclause)
+          
           params.push(`%${word}%`);
           idx++;
-          // build the OR block for this word
+          // 
           wordClauses.push(`(
             p.pavadinimas ILIKE $${paramIndex} OR
             p.aprasymas ILIKE $${paramIndex} OR
@@ -148,7 +148,7 @@ router.get('/api/praktikos', async (req, res) => {
     const total = countRes.rows[0] ? parseInt(countRes.rows[0].total, 10) : 0;
     console.log('Total internships after filter:', total);
 
-    // PUSLAPIAVIMAS
+    // PUSLAPIAVIMAS - (rodys irasus 0-9 arba 10-19 ar 20-29)
     const offset = (page - 1) * per_page;
     params.push(per_page);
     params.push(offset);
@@ -158,7 +158,7 @@ router.get('/api/praktikos', async (req, res) => {
     console.log('Returned internships:', result.rows.length);
     console.log('Internship IDs:', result.rows.map(r => r.praktikos_id));
     
-    // PUSLAPIAVIMUI
+    // PUSLAPIAVIMUI (kiek bus puslapiu)
     const total_pages = Math.ceil(total / per_page);
 
     res.json({ items: result.rows, total, page, per_page, total_pages });
@@ -200,17 +200,17 @@ router.post('/api/praktikos', isAuth, upload.single('vadovas_CV'), async (req, r
     if (role !== 'imone') return res.status(403).json({ error: 'Only companies can create internships' });
 
     
-  // Debug: log incoming body and file (temporary)
-  console.log('Create internship request body:', req.body);
-  console.log('Create internship uploaded file:', req.file && req.file.filename);
+    // Debug: log incoming body and file (temporary)
+    console.log('Create internship request body:', req.body);
+    console.log('Create internship uploaded file:', req.file && req.file.filename);
 
-  const { pavadinimas, aprasymas, lokacija, miestas, expires_at, tipas, reikalavimai, vadovas_vardas, vadovas_pavarde, vadovas_el_pastas, vadovas_telefonas } = req.body;
+    const { pavadinimas, aprasymas, lokacija, miestas, expires_at, tipas, reikalavimai, vadovas_vardas, vadovas_pavarde, vadovas_el_pastas, vadovas_telefonas } = req.body;
 
-    // Server-side validation (mirror client rules)
+    // Server-side validation 
     const fieldErrors = {};
     const pushFieldError = (k, m) => { fieldErrors[k] = m; };
 
-    // required fields
+    
     if (!pavadinimas || !String(pavadinimas).trim()) pushFieldError('pavadinimas', 'Pavadinimas yra privalomas');
     if (!aprasymas || !String(aprasymas).trim()) pushFieldError('aprasymas', 'Aprašymas yra privalomas');
     if (!lokacija || !String(lokacija).trim()) pushFieldError('lokacija', 'Adresas yra privalomas');
@@ -218,34 +218,34 @@ router.post('/api/praktikos', isAuth, upload.single('vadovas_CV'), async (req, r
     if (!reikalavimai || !String(reikalavimai).trim()) pushFieldError('reikalavimai', 'Reikalavimai yra privalomi');
     if (!tipas || !String(tipas).trim()) pushFieldError('tipas', 'Pasirinkite praktikos sritį / tipą');
 
-    // length limits
+    // ilgiu limitas
     if (pavadinimas && String(pavadinimas).trim().length > 50) pushFieldError('pavadinimas', 'Pavadinimas negali viršyti 50 simbolių');
     if (aprasymas && String(aprasymas).trim().length > 1000) pushFieldError('aprasymas', 'Aprašymas negali viršyti 1000 simbolių');
     if (reikalavimai && String(reikalavimai).trim().length > 1000) pushFieldError('reikalavimai', 'Reikalavimai negali viršyti 1000 simbolių');
     if (lokacija && String(lokacija).trim().length > 50) pushFieldError('lokacija', 'Adresas negali viršyti 50 simbolių');
 
-    // address must contain at least one digit
+    // adresas privalo tureti numeri
     if (lokacija && !/\d/.test(String(lokacija))) pushFieldError('lokacija', 'Adresas turi turėti namo numerį');
 
-    // vadovas fields required and length
-  if (!vadovas_vardas || !String(vadovas_vardas).trim()) pushFieldError('praktikos_vadovas_vardas', 'Vadovo vardas yra privalomas');
-  if (!vadovas_pavarde || !String(vadovas_pavarde).trim()) pushFieldError('praktikos_vadovas_pavarde', 'Vadovo pavardė yra privaloma');
-  if (!vadovas_el_pastas || !String(vadovas_el_pastas).trim()) pushFieldError('praktikos_vadovas_el_pastas', 'Vadovo el. paštas yra privalomas');
-  if (!vadovas_telefonas || !String(vadovas_telefonas).trim()) pushFieldError('praktikos_vadovas_tel', 'Vadovo telefono numeris yra privalomas');
+    // vadovas laukeliu ilgio tikrinimas
+    if (!vadovas_vardas || !String(vadovas_vardas).trim()) pushFieldError('praktikos_vadovas_vardas', 'Vadovo vardas yra privalomas');
+    if (!vadovas_pavarde || !String(vadovas_pavarde).trim()) pushFieldError('praktikos_vadovas_pavarde', 'Vadovo pavardė yra privaloma');
+    if (!vadovas_el_pastas || !String(vadovas_el_pastas).trim()) pushFieldError('praktikos_vadovas_el_pastas', 'Vadovo el. paštas yra privalomas');
+    if (!vadovas_telefonas || !String(vadovas_telefonas).trim()) pushFieldError('praktikos_vadovas_tel', 'Vadovo telefono numeris yra privalomas');
 
-  if (vadovas_vardas && String(vadovas_vardas).trim().length > 50) pushFieldError('praktikos_vadovas_vardas', 'Vardas negali viršyti 50 simbolių');
-  if (vadovas_pavarde && String(vadovas_pavarde).trim().length > 50) pushFieldError('praktikos_vadovas_pavarde', 'Pavardė negali viršyti 50 simbolių');
-  if (vadovas_el_pastas && String(vadovas_el_pastas).trim().length > 50) pushFieldError('praktikos_vadovas_el_pastas', 'El. paštas negali viršyti 50 simbolių');
+    if (vadovas_vardas && String(vadovas_vardas).trim().length > 50) pushFieldError('praktikos_vadovas_vardas', 'Vardas negali viršyti 50 simbolių');
+    if (vadovas_pavarde && String(vadovas_pavarde).trim().length > 50) pushFieldError('praktikos_vadovas_pavarde', 'Pavardė negali viršyti 50 simbolių');
+    if (vadovas_el_pastas && String(vadovas_el_pastas).trim().length > 50) pushFieldError('praktikos_vadovas_el_pastas', 'El. paštas negali viršyti 50 simbolių');
 
     // email
     const emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-  if (vadovas_el_pastas && !emailRe.test(String(vadovas_el_pastas).trim())) pushFieldError('praktikos_vadovas_el_pastas', 'Neteisingas vadovo el. pašto adresas');
+    if (vadovas_el_pastas && !emailRe.test(String(vadovas_el_pastas).trim())) pushFieldError('praktikos_vadovas_el_pastas', 'Neteisingas vadovo el. pašto adresas');
 
-    // phone strict format
+    // telefono numeris privalo buti 12 simboliu ir prasideti +370
     const phoneStrictRe = /^\+370\d{8}$/;
-  if (vadovas_telefonas && !phoneStrictRe.test(String(vadovas_telefonas).trim())) pushFieldError('praktikos_vadovas_tel', 'Telefono numeris turi prasidėti +370 ir būti 12 simbolių, pvz. +37069696996');
+    if (vadovas_telefonas && !phoneStrictRe.test(String(vadovas_telefonas).trim())) pushFieldError('praktikos_vadovas_tel', 'Telefono numeris turi prasidėti +370 ir būti 12 simbolių, pvz. +37069696996');
 
-    // tipas must be one of allowed
+    // tipasw privalo buti is saraso
     const tipasNormalized = String(tipas || '').trim();
     if (tipas && !INTERN_TYPES.includes(tipasNormalized)) pushFieldError('tipas', 'Neteisingas praktikos tipas');
 
@@ -260,12 +260,12 @@ router.post('/api/praktikos', isAuth, upload.single('vadovas_CV'), async (req, r
       }
     }
 
-    // file must be present (multer already checks size/type)
+    // file privalomas (multer tikrina dydi)
     if (!req.file) pushFieldError('vadovas_CV', 'Pridėkite vadovo CV (PDF/DOC/DOCX)');
 
-    // validate city against known list if available
+    // validate miesat pagal miestu sarasa
     try {
-      // try to load frontend city list to ensure canonical values
+      
       const cityList = require('../..//frontend/src/data/cityList');
       const cities = cityList && cityList.CITY_LIST ? cityList.CITY_LIST : cityList;
       if (miestas && Array.isArray(cities) && cities.length > 0 && !cities.includes(miestas)) {
@@ -326,7 +326,7 @@ router.post('/api/praktikos', isAuth, upload.single('vadovas_CV'), async (req, r
       vadovasId = ins.rows[0].vadovo_id;
     }
 
-    // Insert internship (include optional 'tipas' and optional 'expires_at' and save city (miestas)
+    // Insert internship 
     console.log('Inserting internship with values:', {
       imones_id: userId,
       pavadinimas,
@@ -357,11 +357,11 @@ router.post('/api/praktikos', isAuth, upload.single('vadovas_CV'), async (req, r
 
     res.status(201).json(created.rows[0]);
   } catch (err) {
-    console.error('Error creating internship:', err);
-    // Return the error message in dev to help debugging (safe in local/dev)
-    const msg = err && err.message ? err.message : 'Server error';
-    res.status(500).json({ error: msg });
-  }
+      console.error('Error creating internship:', err);
+      // Return the error message in dev to help debugging (safe in local/dev)
+      const msg = err && err.message ? err.message : 'Server error';
+      res.status(500).json({ error: msg });
+    }
 });
 
 // POST /api/praktikos/:id/apply - studentai aplikuoja i praktika
@@ -487,7 +487,7 @@ router.get('/api/praktikos/:id/application-status', isAuth, async (req, res) => 
   }
 });
 
-// GET /api/my-applications - get studento aplikacijas i praktika
+// GET /api/my-applications - get studento aplikacijas i praktika ()
 router.get('/api/my-applications', isAuth, async (req, res) => {
   try {
     const userId = req.user.id;

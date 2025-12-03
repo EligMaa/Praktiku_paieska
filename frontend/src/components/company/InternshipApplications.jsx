@@ -29,6 +29,16 @@ export default function InternshipApplications({ internshipId, internshipTitle, 
   };
 
   const handleStatusUpdate = async (applicationId, newStatus) => {
+    // Patvirtinimo pranessimas
+    const confirmMessages = {
+      patvirtinta: 'Ar tikrai norite priimti šią aplikaciją?',
+      atmesta: 'Ar tikrai norite atmesti šią aplikaciją?',
+      laukia: 'Ar tikrai norite grąžinti šią aplikaciją į laukiančių būseną?'
+    };
+    
+    const confirmed = window.confirm(confirmMessages[newStatus] || 'Ar tikrai norite pakeisti statusą?');
+    if (!confirmed) return;
+    
     setUpdatingId(applicationId);
     try {
       await updateApplicationStatus(applicationId, newStatus);

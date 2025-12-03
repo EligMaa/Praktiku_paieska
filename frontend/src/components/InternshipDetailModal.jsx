@@ -81,7 +81,7 @@ export default function InternshipDetailModal({ open, internshipId, onClose }) {
             </div>
             
             
-            {/* Expiry warning */}
+            {/* Negaliojintis skelbimas*/}
             {internship.expires_at && new Date(internship.expires_at) < new Date() && (
               <div className="internship-expired-banner">
                 <strong>⚠️ Šis skelbimas nebegalioja</strong>
