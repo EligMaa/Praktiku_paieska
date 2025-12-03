@@ -1,4 +1,4 @@
-// internshipService.js - Services for internship listings and applications
+// internshipService.js - Services praktiku
 
 const API_URL = import.meta.env.VITE_SERVER_URL;
 
@@ -94,7 +94,7 @@ export async function getMyApplications() {
   }
 }
 
-// For companies to create internship listings
+// imonems - sukurti nauja praktika (TIK imonems)
 export async function createInternship(internshipData) {
   try {
     const response = await fetch(`${API_URL}/api/praktikos`, {
