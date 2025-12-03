@@ -9,7 +9,7 @@
 .edit-profile-form h2 {
   margin-bottom: 16px;
   text-align: center;
-  color: #c1c1c1;
+  color: #ffffff;
 }
 
 .field-group {
@@ -24,11 +24,16 @@
   color: #999999;
 }
 
+/* apply same styles to inputs, textarea and select inside .field-group */
 .field-group input,
-.field-group textarea {
+.field-group textarea,
+.field-group select {
   padding: 8px;
   border-radius: 4px;
   border: 1px solid #ccc;
+  font-size: 1rem;
+  background: #fff;
+  color: #222;
 }
 
 .field-group textarea {
@@ -99,6 +104,11 @@
 .loading-container {
   text-align: center;
   margin-top: 10px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .spinner {
@@ -118,6 +128,20 @@
   color: #666;
   font-style: italic;
 }
+
+.field-meta{
+  text-align: right;
+  margin-top: 4px;
+  color: #999999;
+
+}
+
+.limit-message {
+  font-size: 0.85rem;
+  color: #c00;
+  margin-top: 4px;
+}
+
 
 @keyframes spin {
   to {

@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext";
 import SearchBar from "./SearchBar";
 import "./Header.css";
+import logo from "../assets/logo.jpg";
 
-export default function Header() {
+export default function Header({ onSearch }) {
   const navigate = useNavigate();
   const { user } = useUser();
-  const [search, setSearch] = useState("");
 
   // Define all styles as objects for inline styling
   const styles = {
@@ -34,17 +34,34 @@ export default function Header() {
     headerTop: {
       width: '100%',
       display: 'flex',
-      justifyContent: 'center',
-      flexDirection: 'column',
+      justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: '2rem',
       position: 'relative'
+    },
+    logoContainer: {
+      position: 'fixed',
+      top: '1rem',
+      left: '1rem',
+      zIndex: 1000,
+      cursor: 'pointer',
+      transition: 'opacity 0.2s',
+      padding: '0.5rem',
+      background: 'rgba(0, 0, 0, 0.3)',
+      borderRadius: '8px'
+    },
+    logo: {
+      height: '50px',
+      width: 'auto',
+      objectFit: 'contain',
+      display: 'block'
     },
     headerTitle: {
       fontSize: '4rem',
       fontWeight: 'bold',
       marginBottom: '1.5rem',
-      textAlign: 'center'
+      textAlign: 'center',
+      flex: 1
     },
     headerButtons: {
       display: 'flex',
@@ -70,7 +87,7 @@ export default function Header() {
       margin: '1rem 0 2rem'
     },
     headerSlogan: {
-      fontSize: '4rem',
+      
       fontWeight: 'bold',
       textTransform: 'uppercase',
       margin: 0
@@ -87,6 +104,16 @@ export default function Header() {
     <header style={styles.header}>
       <div style={styles.headerContainer}>
         <div style={styles.headerTop}>
+          {/* Logo */}
+          <div 
+            style={styles.logoContainer} 
+            onClick={() => navigate("/")}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
+            <img src={logo} alt="InternLink Logo" style={styles.logo} />
+          </div>
+          
           <h1 style={styles.headerTitle}>InternLink</h1>
           <div style={styles.headerButtons}>
             {user.loggedIn ? (
@@ -116,11 +143,11 @@ export default function Header() {
         </div>
         
         <div style={styles.headerMiddle}>
-          <h2 style={styles.headerSlogan}>COMPANIES</h2>
+          <h2 className="headerSlogan">Siūlomi praktikos pasiūlymai</h2>
         </div>
         
         <div style={styles.headerBottom}>
-          <SearchBar onSearch={setSearch} />
+          <SearchBar onSearch={onSearch} />
         </div>
       </div>
     </header>

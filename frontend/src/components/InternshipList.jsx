@@ -1,42 +1,65 @@
 import React, { useState, useEffect } from "react";
+import './InternshipList.css';
 import { getAllInternships } from "../services/internshipService";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext";
+import AuthPromptModal from './AuthPromptModal';
 
-export default function InternshipList({ initialInternships = [] }) {
+export default function InternshipList({ initialInternships = [], filters = {} }) {
   const [internships, setInternships] = useState(initialInternships);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
   const { user } = useUser();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingInternshipId, setPendingInternshipId] = useState(null);
   
   useEffect(() => {
+    // Sinchronizuojama tik tada, kai tėvinis objektas aiškiai nurodo (ilgis > 0)
+    //  naudojamas ilgis, kad būtų išvengta begalybės ciklu, kai pakartotinai perduodamas naujas tuščias masyvas
     if (initialInternships.length > 0) {
       setInternships(initialInternships);
       setLoading(false);
       return;
     }
-    
+
     const fetchInternships = async () => {
       try {
         setLoading(true);
-        const fetchedInternships = await getAllInternships();
-        setInternships(fetchedInternships);
+        const payload = await getAllInternships(Object.assign({}, filters, { page }));
+        // payload may be either array (legacy) or paginated object { items, total, page, per_page, total_pages }
+        if (Array.isArray(payload)) {
+          setInternships(payload);
+          setTotalPages(1);
+        } else {
+          setInternships(payload.items || []);
+          setTotalPages(payload.total_pages || 1);
+        }
         setError(null);
       } catch (err) {
-        console.error("Error fetching internships:", err);
-        setError("Failed to load internships. Please try again later.");
+        console.error("Error fetchinant praktikas:", err);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchInternships();
-  }, [initialInternships]);
+    // depend on the length of initialInternships and filter values (primitive)
+  }, [initialInternships.length, filters.query, filters.tipas, filters.miestas, page]);
+
+  // PUSLAPIAVIMUI, jei uzdedamas naujas filtras nueinama i pirma puslapi
+  useEffect(() => {
+    setPage(1);
+  }, [filters.query, filters.tipas, filters.miestas]);
   
   const handleApply = async (internshipId) => {
     if (!user || !user.loggedIn) {
-      navigate("/login?redirect=/internships");
+      // rodyti prisijungimo modala vietoj tiesioginio peradresavimo
+      setPendingInternshipId(internshipId);
+      setShowAuthModal(true);
       return;
     }
     
@@ -48,37 +71,80 @@ export default function InternshipList({ initialInternships = [] }) {
     navigate(`/internship/${internshipId}/apply`);
   };
   
-  if (loading) {
-    return <div className="loading">Kraunami praktikų skelbimai...</div>;
-  }
-  
   if (error) {
     return <div className="error">{error}</div>;
   }
-  
-  if (internships.length === 0) {
-    return <div className="no-internships">Nėra praktikų skelbimų.</div>;
+
+  if (loading) {
+    // simple skeletons while loading
+    return (
+      <div className="internship-list internship-skeletons">
+        {[0,1,2].map(i => ( 
+          <div key={i} className="internship-card skeleton">
+            <div className="skeleton-title" style={{height:20, width:'60%', background:'#ddd', marginBottom:8}} />
+            <div className="skeleton-sub" style={{height:12, width:'40%', background:'#e6e6e6', marginBottom:12}} />
+            <div className="skeleton-line" style={{height:10, width:'100%', background:'#eee', marginBottom:6}} />
+            <div className="skeleton-line" style={{height:10, width:'90%', background:'#eee', marginBottom:6}} />
+            <div className="skeleton-line" style={{height:10, width:'80%', background:'#f7f7f7'}} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const isFiltering = Boolean(
+    (filters && filters.query && filters.query.trim()) ||
+    (filters && filters.tipas) ||
+    (filters && filters.miestas)
+  );
+
+  if (!loading && internships.length === 0) {
+    return <div className="no-internships">{isFiltering ? 'Nerasta praktikų, atitinkančių pasirinktus filtrus.' : 'Nėra praktikų skelbimų.'}</div>;
   }
   
   return (
     <div className="internship-list">
       {internships.map((internship) => (
-        <div key={internship.praktikos_id} className="internship-card">
+        <div key={internship.praktikos_id} className="internship-card" onClick={() => navigate(`/internship/${internship.praktikos_id}`)} style={{cursor:'pointer'}}>
           <h3>{internship.pavadinimas}</h3>
           <p className="company">{internship.imones_pavadinimas}</p>
-          <p className="location">Vieta: {internship.lokacija}</p>
-          <div className="description">{internship.aprasymas.substring(0, 150)}...</div>
-          <div className="requirements">
-            <strong>Reikalavimai:</strong> {internship.reikalavimai.substring(0, 100)}...
-          </div>
-          <button 
-            onClick={() => handleApply(internship.praktikos_id)}
-            className="apply-button"
-          >
-            Aplikuoti
-          </button>
+          <p className="meta-line"><strong>Tipas:</strong> {internship.tipas || '—'}</p>
+          <p className="meta-line"><strong>Miestas:</strong> {internship.miestas || '—'}</p>
+          <p className="meta-line"><strong>Adresas:</strong> {internship.lokacija || '—'}</p>
+          <p className="meta-line" style={{marginTop:8, color:'#999'}}><strong>Iš viso aplikavo:</strong> {internship.application_count || 0}</p>
+          {/* {user.role==="studentas" && <button onClick={(e) => { e.stopPropagation(); handleApply(internship.praktikos_id); }}>Aplikuoti</button>} */}
         </div>
       ))}
+
+      
+      {/* PUSLAPIAVIMO mygtukai */}
+      {totalPages > 1 && (
+          <div className="puslapiavimo-container" style={{display: 'flex', justifyContent: 'center', marginTop: 16, gap:8}}>
+            <button className="page-btn" disabled={page <= 1} onClick={(e) => { e.stopPropagation(); setPage(p => Math.max(1, p - 1)); }}>&laquo; Ankstesnis</button>
+            {[...Array(totalPages)].map((_, idx) => {
+              const p = idx + 1;
+              return (
+                <button key={p} className={`page-btn ${p===page ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setPage(p); }} aria-current={p===page ? 'page' : undefined}>{p}</button>
+              );
+            })}
+            <button className="page-btn" disabled={page >= totalPages} onClick={(e) => { e.stopPropagation(); setPage(p => Math.min(totalPages, p + 1)); }}>Kitas &raquo;</button>
+          </div>
+      )}
+
+      <AuthPromptModal
+        open={showAuthModal}
+        onClose={() => { setShowAuthModal(false); setPendingInternshipId(null); }}
+        onLogin={() => {
+          setShowAuthModal(false);
+          const target = pendingInternshipId ? `/internship/${pendingInternshipId}/apply` : '/internships';
+          navigate(`/login?redirect=${encodeURIComponent(target)}`);
+        }}
+        onSignup={() => {
+          setShowAuthModal(false);
+          const target = pendingInternshipId ? `/internship/${pendingInternshipId}/apply` : '/internships';
+          navigate(`/signup?redirect=${encodeURIComponent(target)}`);
+        }}
+      />
     </div>
   );
 }

@@ -1,0 +1,149 @@
+.internship-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.internship-detail-modal {
+  background: #fff;
+  color: #000;
+  border-radius: 8px;
+  width: min(800px, 95%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px;
+  position: relative;
+}
+
+.internship-detail-close {
+  float: right;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #333;
+  transition: color 0.2s ease;
+}
+
+.internship-detail-close:hover {
+  color: #000;
+}
+
+.internship-detail-loading,
+.internship-detail-error {
+  padding: 20px;
+  text-align: center;
+}
+
+.internship-detail-error {
+  color: red;
+}
+
+.internship-detail-title {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.internship-detail-subtitle {
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.internship-detail-section {
+  margin-bottom: 16px;
+}
+
+.internship-detail-text {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.internship-detail-mentor {
+  margin-top: 12px;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+
+.internship-detail-mentor h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.internship-detail-mentor p {
+  margin: 6px 0;
+}
+
+.internship-detail-expiry {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fff3cd;
+  border-radius: 6px;
+  border-left: 4px solid #ffc107;
+}
+
+/* Application status banner */
+.application-status-banner {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  font-size: 14px;
+}
+
+.application-status-banner strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.application-status-banner p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Status-specific colors */
+.application-status-banner.status-laukia {
+  background: #fff8e1;
+  border-color: #ffa000;
+  color: #663c00;
+}
+
+.application-status-banner.status-patvirtinta {
+  background: #d4edda;
+  border-color: #28a745;
+  color: #155724;
+  font-weight: 500;
+}
+
+.application-status-banner.status-atmesta {
+  background: #ffebee;
+  border-color: #f44336;
+  color: #b71c1c;
+}
+
+/* Expired internship banner */
+.internship-expired-banner {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border-left: 4px solid #9e9e9e;
+  color: #424242;
+}
+
+.internship-expired-banner strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 6px;
+  color: #757575;
+}
+
+.internship-expired-banner p {
+  margin: 0;
+  opacity: 0.8;
+}

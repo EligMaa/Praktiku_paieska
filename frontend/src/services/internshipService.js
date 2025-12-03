@@ -1,20 +1,32 @@
-// internshipService.js - Services for internship listings and applications
+// internshipService.js - Services praktiku
 
-const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_SERVER_URL;
 
-// Get all internship listings
-export async function getAllInternships() {
-  try {
-    const response = await fetch(`${API_URL}/api/praktikos`, {
+// Get visus praktikų skelbimus su filtrais
+export async function getAllInternships(filters = {}) {
+  try { 
+    const params = new URLSearchParams();
+    if (filters.query) params.append('q', filters.query);
+    if (filters.tipas) params.append('tipas', filters.tipas);
+    if (filters.miestas) params.append('miestas', filters.miestas);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.per_page) params.append('per_page', String(filters.per_page));
+
+    const url = `${API_URL}/api/praktikos${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await fetch(url, {
       method: 'GET',
       credentials: 'include',
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch internships: ${response.status}`);
     }
+
+    // API dabar grazina puslapiuota objekta { items, total, page, per_page, total_pages }
+    const payload = await response.json();
     
-    return await response.json();
+    if (Array.isArray(payload)) return payload;
+    return payload;
   } catch (error) {
     console.error('Error fetching internships:', error);
     throw error;
@@ -53,17 +65,17 @@ export async function applyForInternship(internshipId, application = {}) {
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to apply for internship: ${response.status}`);
+      throw new Error(`Nepavyko aplikuoti i praktika: ${response.status}`);
     }
     
     return await response.json();
   } catch (error) {
-    console.error(`Error applying for internship #${internshipId}:`, error);
+    console.error(`Error aplikuojant i praktika #${internshipId}:`, error);
     throw error;
   }
 }
 
-// Get user's internship applications
+// Get studento aplikacijas i praktika
 export async function getMyApplications() {
   try {
     const response = await fetch(`${API_URL}/api/my-applications`, {
@@ -82,7 +94,7 @@ export async function getMyApplications() {
   }
 }
 
-// For companies to create internship listings
+// imonems - sukurti nauja praktika (TIK imonems)
 export async function createInternship(internshipData) {
   try {
     const response = await fetch(`${API_URL}/api/praktikos`, {
@@ -95,21 +107,83 @@ export async function createInternship(internshipData) {
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to create internship: ${response.status}`);
+      throw new Error(`Nepavyko sukurti praktikos: ${response.status}`);
     }
     
     return await response.json();
   } catch (error) {
-    console.error('Error creating internship:', error);
+    console.error('Error kuriant praktikos:', error);
     throw error;
   }
 }
 
-// Bundle all functions into an object for named imports
+// Get paraiskas konkrecios praktikos (TIK imonems)
+export async function getInternshipApplications(internshipId) {
+  try {
+    const response = await fetch(`${API_URL}/api/praktikos/${internshipId}/applications`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Nepavyko gauti aplikaciju: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    throw error;
+  }
+}
+
+// Atnaujinamas aplikacijos statusas (TIK imonems)
+export async function updateApplicationStatus(applicationId, status) {
+  try {
+    const response = await fetch(`${API_URL}/api/applications/${applicationId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Nepavyko atnaujinti aplikacijos statuso: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error naujinant aplikacijos statusa:', error);
+    throw error;
+  }
+}
+
+// Get sudentu profiliu informacija (TIK imonems)
+export async function getStudentProfile(studentId) {
+  try {
+    const response = await fetch(`${API_URL}/api/students/${studentId}/profile`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Nepavyko gauti studento profilio: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error gaunant studento profili:', error);
+    throw error;
+  }
+}
+
+// Sujungti visas funkcijas į objektą, skirtą vardiniams importams 
 export const internshipService = {
   getAllInternships,
   getInternshipById,
   applyForInternship,
   getMyApplications,
-  createInternship
+  createInternship,
+  getInternshipApplications,
+  updateApplicationStatus,
+  getStudentProfile
 };
